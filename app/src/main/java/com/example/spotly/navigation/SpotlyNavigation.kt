@@ -20,6 +20,10 @@ import com.example.spotly.ui.feed.FeedScreen
 import com.example.spotly.ui.post.CreatePostScreen
 import com.example.spotly.ui.profile.ProfileScreen
 import com.example.spotly.ui.search.SearchScreen
+import com.example.spotly.ui.auth.LoginScreen
+import com.example.spotly.ui.auth.RegisterScreen
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.spotly.viewmodel.AuthViewModel
 
 @Composable
 fun SpotlyNavigation() {
@@ -31,93 +35,136 @@ fun SpotlyNavigation() {
         ?.destination
         ?.route
 
+    val authViewModel: AuthViewModel = viewModel()
+
+    val startDestination = if (authViewModel.isUserLoggedIn()) {
+        "feed"
+    } else {
+        "login"
+    }
+
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                NavigationBarItem(
-                    selected = currentRoute == "feed",
-                    onClick = {
-                        navController.navigate("feed") {
-                            popUpTo("feed") {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Default.Home,
-                            contentDescription = "Inicio"
-                        )
-                    }
-                )
 
-                NavigationBarItem(
-                    selected = currentRoute == "search",
-                    onClick = {
-                        navController.navigate("search") {
-                            popUpTo("feed") {
-                                saveState = true
+            if (currentRoute != "login" && currentRoute != "register") {
+                NavigationBar {
+                    NavigationBarItem(
+                        selected = currentRoute == "feed",
+                        onClick = {
+                            navController.navigate("feed") {
+                                popUpTo("feed") {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
                             }
-                            launchSingleTop = true
-                            restoreState = true
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.Home,
+                                contentDescription = "Inicio"
+                            )
                         }
-                    },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Buscar"
-                        )
-                    }
-                )
+                    )
 
-                NavigationBarItem(
-                    selected = currentRoute == "create_post",
-                    onClick = {
-                        navController.navigate("create_post") {
-                            popUpTo("feed") {
-                                saveState = true
+                    NavigationBarItem(
+                        selected = currentRoute == "search",
+                        onClick = {
+                            navController.navigate("search") {
+                                popUpTo("feed") {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
                             }
-                            launchSingleTop = true
-                            restoreState = true
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Buscar"
+                            )
                         }
-                    },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Default.AddCircle,
-                            contentDescription = "Crear publicación"
-                        )
-                    }
-                )
+                    )
 
-                NavigationBarItem(
-                    selected = currentRoute == "profile",
-                    onClick = {
-                        navController.navigate("profile") {
-                            popUpTo("feed") {
-                                saveState = true
+                    NavigationBarItem(
+                        selected = currentRoute == "create_post",
+                        onClick = {
+                            navController.navigate("create_post") {
+                                popUpTo("feed") {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
                             }
-                            launchSingleTop = true
-                            restoreState = true
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.AddCircle,
+                                contentDescription = "Crear publicación"
+                            )
                         }
-                    },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Perfil"
-                        )
-                    }
-                )
+                    )
+
+                    NavigationBarItem(
+                        selected = currentRoute == "profile",
+                        onClick = {
+                            navController.navigate("profile") {
+                                popUpTo("feed") {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "Perfil"
+                            )
+                        }
+                    )
+                }
             }
         }
     ) { innerPadding ->
 
         NavHost(
             navController = navController,
-            startDestination = "feed",
+            startDestination = startDestination,
             modifier = Modifier.padding(innerPadding)
         ) {
+
+            composable("login") {
+                LoginScreen(
+                    viewModel = authViewModel,
+                    onRegisterClick = {
+                        navController.navigate("register")
+                    },
+                    onLoginSuccess = {
+                        navController.navigate("feed") {
+                            popUpTo("login") {
+                                inclusive = true
+                            }
+                        }
+                    }
+                )
+            }
+
+            composable("register") {
+                RegisterScreen(
+                    viewModel = authViewModel,
+                    onLoginClick = {
+                        navController.popBackStack()
+                    },
+                    onRegisterSuccess = {
+                        navController.navigate("feed") {
+                            popUpTo("login") {
+                                inclusive = true
+                            }
+                        }
+                    }
+                )
+            }
 
             composable("feed") {
                 FeedScreen()
@@ -132,7 +179,16 @@ fun SpotlyNavigation() {
             }
 
             composable("profile") {
-                ProfileScreen()
+                ProfileScreen(
+                    viewModel = authViewModel,
+                    onLogoutClick = {
+                        authViewModel.logout()
+
+                        navController.navigate("login") {
+                            popUpTo(0)
+                        }
+                    }
+                )
             }
         }
     }
