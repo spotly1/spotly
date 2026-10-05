@@ -118,32 +118,4 @@ class AuthRepository {
                 "Ocurrió un error. Intentá nuevamente."
         }
     }
-
-    fun getCurrentUsername(
-        onSuccess: (String) -> Unit,
-        onError: (String) -> Unit
-    ) {
-        val uid = auth.currentUser?.uid
-
-        if (uid == null) {
-            onError("Usuario no autenticado.")
-            return
-        }
-
-        db.collection("users")
-            .document(uid)
-            .get()
-            .addOnSuccessListener { document ->
-                val username = document.getString("username")
-
-                if (username != null) {
-                    onSuccess(username)
-                } else {
-                    onError("No se encontró el nombre de usuario.")
-                }
-            }
-            .addOnFailureListener {
-                onError("Error al cargar el perfil.")
-            }
-    }
 }

@@ -12,9 +12,6 @@ class AuthViewModel : ViewModel() {
     val isLoading: StateFlow<Boolean> = _isLoading
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
-    private val _username = MutableStateFlow<String?>(null)
-
-    val username: StateFlow<String?> = _username
 
     fun login(
         email: String,
@@ -104,16 +101,5 @@ class AuthViewModel : ViewModel() {
 
     fun isUserLoggedIn(): Boolean {
         return repository.isUserLoggedIn()
-    }
-
-    fun loadCurrentUsername() {
-        repository.getCurrentUsername(
-            onSuccess = { username ->
-                _username.value = username
-            },
-            onError = { error ->
-                _errorMessage.value = error
-            }
-        )
     }
 }

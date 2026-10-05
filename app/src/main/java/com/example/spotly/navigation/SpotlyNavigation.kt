@@ -24,6 +24,10 @@ import com.example.spotly.ui.auth.LoginScreen
 import com.example.spotly.ui.auth.RegisterScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.spotly.viewmodel.AuthViewModel
+import com.example.spotly.viewmodel.ProfileViewModel
+import com.example.spotly.ui.profile.EditProfileScreen
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 
 @Composable
 fun SpotlyNavigation() {
@@ -36,6 +40,8 @@ fun SpotlyNavigation() {
         ?.route
 
     val authViewModel: AuthViewModel = viewModel()
+
+    val profileViewModel: ProfileViewModel = viewModel()
 
     val startDestination = if (authViewModel.isUserLoggedIn()) {
         "feed"
@@ -180,7 +186,10 @@ fun SpotlyNavigation() {
 
             composable("profile") {
                 ProfileScreen(
-                    viewModel = authViewModel,
+                    viewModel = profileViewModel,
+                    onEditProfileClick = {
+                        navController.navigate("edit_profile")
+                    },
                     onLogoutClick = {
                         authViewModel.logout()
 
@@ -189,6 +198,26 @@ fun SpotlyNavigation() {
                         }
                     }
                 )
+            }
+
+            composable("edit_profile") {
+                val user by profileViewModel.user.collectAsState()
+                val isLoading by profileViewModel.isLoading.collectAsState()
+
+                user?.let { currentUser ->
+                    EditProfileScreen(
+                        user = currentUser,
+                        isLoading = isLoading,
+                        onSaveClick = { description ->
+                            profileViewModel.updateDescription(
+                                description = description,
+                                onSuccess = {
+                                    navController.popBackStack()
+                                }
+                            )
+                        }
+                    )
+                }
             }
         }
     }
