@@ -44,8 +44,9 @@ class ProfileRepository {
             }
     }
 
-    fun updateDescription(
+    fun updateProfile(
         description: String,
+        profileImageUrl: String,
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
@@ -56,9 +57,14 @@ class ProfileRepository {
             return
         }
 
+        val updates = mapOf(
+            "description" to description,
+            "profileImageUrl" to profileImageUrl
+        )
+
         db.collection("users")
             .document(uid)
-            .update("description", description)
+            .update(updates)
             .addOnSuccessListener {
                 onSuccess()
             }

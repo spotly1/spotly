@@ -203,14 +203,18 @@ fun SpotlyNavigation() {
             composable("edit_profile") {
                 val user by profileViewModel.user.collectAsState()
                 val isLoading by profileViewModel.isLoading.collectAsState()
+                val errorMessage by profileViewModel.errorMessage.collectAsState()
 
                 user?.let { currentUser ->
                     EditProfileScreen(
                         user = currentUser,
                         isLoading = isLoading,
-                        onSaveClick = { description ->
-                            profileViewModel.updateDescription(
+                        errorMessage = errorMessage,
+                        onSaveClick = { description, imageUri, removeCurrentImage ->
+                            profileViewModel.updateProfile(
                                 description = description,
+                                imageUri = imageUri,
+                                removeCurrentImage = removeCurrentImage,
                                 onSuccess = {
                                     navController.popBackStack()
                                 }

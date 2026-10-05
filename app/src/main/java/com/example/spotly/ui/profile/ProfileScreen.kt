@@ -30,6 +30,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.spotly.viewmodel.ProfileViewModel
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import coil3.compose.AsyncImage
 
 @Composable
 fun ProfileScreen(
@@ -78,18 +81,30 @@ fun ProfileScreen(
             ) {
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Surface(
-                    modifier = Modifier
-                        .size(100.dp)
-                        .align(Alignment.CenterHorizontally),
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.surfaceVariant
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
+                if (user!!.profileImageUrl.isNotBlank()) {
+                    AsyncImage(
+                        model = user!!.profileImageUrl,
                         contentDescription = "Foto de perfil",
-                        modifier = Modifier.padding(22.dp)
+                        modifier = Modifier
+                            .size(100.dp)
+                            .align(Alignment.CenterHorizontally)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
                     )
+                } else {
+                    Surface(
+                        modifier = Modifier
+                            .size(100.dp)
+                            .align(Alignment.CenterHorizontally),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.surfaceVariant
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Foto de perfil",
+                            modifier = Modifier.padding(22.dp)
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
