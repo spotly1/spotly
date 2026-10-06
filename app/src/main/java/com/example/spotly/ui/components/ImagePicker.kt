@@ -5,7 +5,12 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import android.widget.Toast
+import com.example.spotly.R
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
 import java.io.File
@@ -35,20 +40,32 @@ fun rememberCameraImagePicker(
 
     val context = LocalContext.current
 
-    val imageUri = remember {
-        createImageUri(context)
-    }
+    var pendingImageUri by rememberSaveable { mutableStateOf<String?>(null) }
 
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
-        if (success) {
-            onImageSelected(imageUri)
-        }
+        val uri = pendingImageUri
+        pendingImageUri = null
+        if (success && uri != null) onImageSelected(Uri.parse(uri))
     }
 
     return {
-        cameraLauncher.launch(imageUri)
+        try {
+            // Cada captura tiene su archivo: cancelar o repetir no modifica la foto anterior.
+            val imageUri = createImageUri(context)
+            pendingImageUri = imageUri.toString()
+            cameraLauncher.launch(imageUri)
+        } catch (_: android.content.ActivityNotFoundException) {
+            pendingImageUri = null
+            Toast.makeText(context, R.string.camera_unavailable, Toast.LENGTH_LONG).show()
+        } catch (_: SecurityException) {
+            pendingImageUri = null
+            Toast.makeText(context, R.string.camera_unavailable, Toast.LENGTH_LONG).show()
+        } catch (_: java.io.IOException) {
+            pendingImageUri = null
+            Toast.makeText(context, R.string.camera_unavailable, Toast.LENGTH_LONG).show()
+        }
     }
 }
 

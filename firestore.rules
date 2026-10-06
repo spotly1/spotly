@@ -1,0 +1,119 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function owns(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function validUser() {
+      return request.resource.data.keys().hasOnly([
+          'username',
+          'description',
+          'profileImageUrl',
+          'profileImagePublicId'
+        ])
+        && request.resource.data.username is string
+        && request.resource.data.username.size() >= 3
+        && request.resource.data.username.size() <= 30
+        && request.resource.data.username.matches('[^/]+')
+        && request.resource.data.description is string
+        && request.resource.data.description.size() <= 300
+        && request.resource.data.profileImageUrl is string
+        && request.resource.data.profileImageUrl.size() <= 2048
+        && request.resource.data.profileImagePublicId is string
+        && request.resource.data.profileImagePublicId.size() <= 255
+        && ((request.resource.data.profileImageUrl == ''
+            && request.resource.data.profileImagePublicId == '')
+          || (request.resource.data.profileImageUrl != ''
+            && request.resource.data.profileImagePublicId != ''));
+    }
+
+    function validProfileImage(userId) {
+      let data = request.resource.data;
+      return (data.profileImageUrl == '' && data.profileImagePublicId == '')
+        || (data.profileImageUrl.matches('https://res[.]cloudinary[.]com/iufz7yvd/image/upload/.*')
+          && data.profileImagePublicId.matches('spotly/profiles/' + userId + '/[^/]+'));
+    }
+
+    match /users/{userId} {
+      allow get: if signedIn();
+      // Habilitar consultas al implementar búsqueda, con un esquema público verificable.
+      allow list: if false;
+      allow create: if owns(userId) && validUser()
+        && request.resource.data.description == ''
+        && request.resource.data.profileImageUrl == ''
+        && request.resource.data.profileImagePublicId == ''
+        && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username)).data.uid == userId
+        && getAfter(/databases/$(database)/documents/privateUsers/$(userId)).data.email == request.auth.token.email;
+      allow update: if owns(userId)
+        && validUser()
+        && validProfileImage(userId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'description',
+          'profileImageUrl',
+          'profileImagePublicId'
+        ]);
+      // El borrado de cuenta necesita un flujo de servidor que limpie la reserva.
+      allow delete: if false;
+    }
+
+    match /privateUsers/{userId} {
+      allow get: if owns(userId);
+      allow list: if false;
+      allow create: if owns(userId)
+        && request.resource.data.keys().hasOnly(['email'])
+        && request.resource.data.email is string
+        && request.resource.data.email == request.auth.token.email
+        && !exists(/databases/$(database)/documents/users/$(userId))
+        && getAfter(/databases/$(database)/documents/users/$(userId)).data.username is string;
+      // Cambiar email o borrar cuenta requiere un flujo específico con Firebase Auth.
+      allow update, delete: if false;
+    }
+
+    match /usernames/{username} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['uid'])
+        && request.resource.data.uid == request.auth.uid
+        && !exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.username == username;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    match /posts/{postId} {
+      allow get: if signedIn();
+      allow list: if signedIn() && (resource.data.authorId == request.auth.uid
+        || request.query.limit <= 50);
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly([
+          'authorId', 'username', 'imageUrl', 'imagePublicId', 'description', 'createdAt', 'location'
+        ])
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.username == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.username
+        && request.resource.data.description is string
+        && request.resource.data.description.size() > 0
+        && request.resource.data.description.size() <= 1000
+        && request.resource.data.imageUrl is string
+        && request.resource.data.imageUrl.size() <= 2048
+        && request.resource.data.imageUrl.matches('https://res[.]cloudinary[.]com/iufz7yvd/image/upload/.*')
+        && request.resource.data.imagePublicId is string
+        && request.resource.data.imagePublicId.size() <= 255
+        && request.resource.data.imagePublicId.matches('spotly/posts/' + request.auth.uid + '/[^/]+')
+        && request.resource.data.createdAt == request.time
+        && (!('location' in request.resource.data) || request.resource.data.location == null
+          || request.resource.data.location is latlng);
+      allow update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

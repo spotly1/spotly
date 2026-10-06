@@ -1,11 +1,16 @@
 package com.example.spotly.data.repository
 
+import com.example.spotly.data.model.AppError
+
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 
 class AuthRepository {
 
@@ -16,7 +21,7 @@ class AuthRepository {
         email: String,
         password: String,
         onSuccess: () -> Unit,
-        onError: (String) -> Unit
+        onError: (AppError) -> Unit
     ) {
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
@@ -33,7 +38,7 @@ class AuthRepository {
         email: String,
         password: String,
         onSuccess: () -> Unit,
-        onError: (String) -> Unit
+        onError: (AppError) -> Unit
     ) {
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { authTask ->
@@ -46,13 +51,14 @@ class AuthRepository {
                 val user = auth.currentUser
 
                 if (user == null) {
-                    onError("Ocurrió un error. Intentá nuevamente.")
+                    onError(AppError.Generic)
                     return@addOnCompleteListener
                 }
 
                 val uid = user.uid
                 val usernameRef = db.collection("usernames").document(username)
                 val userRef = db.collection("users").document(uid)
+                val privateUserRef = db.collection("privateUsers").document(uid)
 
                 db.runTransaction { transaction ->
 
@@ -71,10 +77,15 @@ class AuthRepository {
                         userRef,
                         mapOf(
                             "username" to username,
-                            "email" to email,
                             "description" to "",
-                            "profileImageUrl" to ""
+                            "profileImageUrl" to "",
+                            "profileImagePublicId" to ""
                         )
+                    )
+
+                    transaction.set(
+                        privateUserRef,
+                        mapOf("email" to (user.email ?: email))
                     )
 
                 }.addOnSuccessListener {
@@ -86,9 +97,9 @@ class AuthRepository {
                     user.delete()
 
                     if (exception.message == "USERNAME_TAKEN") {
-                        onError("Este nombre de usuario ya está en uso.")
+                        onError(AppError.UsernameTaken)
                     } else {
-                        onError("Ocurrió un error al crear la cuenta.")
+                        onError(AppError.RegistrationFailed)
                     }
                 }
             }
@@ -98,24 +109,29 @@ class AuthRepository {
         auth.signOut()
     }
 
-    fun isUserLoggedIn(): Boolean {
-        return auth.currentUser != null
+    fun observeAuthentication(): Flow<Boolean> = callbackFlow {
+        val listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+            trySend(firebaseAuth.currentUser != null)
+        }
+
+        auth.addAuthStateListener(listener)
+        awaitClose { auth.removeAuthStateListener(listener) }
     }
 
-    private fun getAuthErrorMessage(exception: Exception?): String {
+    private fun getAuthErrorMessage(exception: Exception?): AppError {
         return when (exception) {
+            is FirebaseAuthWeakPasswordException ->
+                AppError.WeakPassword
+
             is FirebaseAuthInvalidCredentialsException,
             is FirebaseAuthInvalidUserException ->
-                "Correo o contraseña incorrectos."
+                AppError.InvalidCredentials
 
             is FirebaseAuthUserCollisionException ->
-                "Ya existe una cuenta con este correo."
-
-            is FirebaseAuthWeakPasswordException ->
-                "La contraseña es demasiado débil."
+                AppError.EmailAlreadyUsed
 
             else ->
-                "Ocurrió un error. Intentá nuevamente."
+                AppError.Generic
         }
     }
 }

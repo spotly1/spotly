@@ -1,8 +1,12 @@
 package com.example.spotly.data.repository
 
+import com.example.spotly.data.model.AppError
+
 import com.example.spotly.data.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.DocumentSnapshot
+import com.google.android.gms.tasks.Tasks
 
 class ProfileRepository {
 
@@ -11,55 +15,61 @@ class ProfileRepository {
 
     fun getCurrentUserProfile(
         onSuccess: (User) -> Unit,
-        onError: (String) -> Unit
+        onError: (AppError) -> Unit
     ) {
         val uid = auth.currentUser?.uid
 
         if (uid == null) {
-            onError("Usuario no autenticado.")
+            onError(AppError.Unauthenticated)
             return
         }
 
-        db.collection("users")
-            .document(uid)
-            .get()
-            .addOnSuccessListener { document ->
-                if (!document.exists()) {
-                    onError("No se encontró el perfil.")
+        // User reúne datos para la pantalla propia; el email se almacena aparte.
+        Tasks.whenAllSuccess<DocumentSnapshot>(
+            db.collection("users").document(uid).get(),
+            db.collection("privateUsers").document(uid).get()
+        ).addOnSuccessListener { documents ->
+                val document = documents[0]
+                val privateDocument = documents[1]
+                if (!document.exists() || !privateDocument.exists()) {
+                    onError(AppError.ProfileNotFound)
                     return@addOnSuccessListener
                 }
 
                 val user = User(
                     uid = uid,
                     username = document.getString("username").orEmpty(),
-                    email = document.getString("email").orEmpty(),
+                    email = privateDocument.getString("email").orEmpty(),
                     description = document.getString("description").orEmpty(),
-                    profileImageUrl = document.getString("profileImageUrl").orEmpty()
+                    profileImageUrl = document.getString("profileImageUrl").orEmpty(),
+                    profileImagePublicId = document.getString("profileImagePublicId").orEmpty()
                 )
 
                 onSuccess(user)
             }
             .addOnFailureListener {
-                onError("Error al cargar el perfil.")
+                onError(AppError.ProfileLoadFailed)
             }
     }
 
     fun updateProfile(
         description: String,
         profileImageUrl: String,
+        profileImagePublicId: String,
         onSuccess: () -> Unit,
-        onError: (String) -> Unit
+        onError: (AppError) -> Unit
     ) {
         val uid = auth.currentUser?.uid
 
         if (uid == null) {
-            onError("Usuario no autenticado.")
+            onError(AppError.Unauthenticated)
             return
         }
 
         val updates = mapOf(
             "description" to description,
-            "profileImageUrl" to profileImageUrl
+            "profileImageUrl" to profileImageUrl,
+            "profileImagePublicId" to profileImagePublicId
         )
 
         db.collection("users")
@@ -69,7 +79,7 @@ class ProfileRepository {
                 onSuccess()
             }
             .addOnFailureListener {
-                onError("Error al actualizar el perfil.")
+                onError(AppError.ProfileUpdateFailed)
             }
     }
 }

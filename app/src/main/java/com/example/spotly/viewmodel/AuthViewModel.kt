@@ -1,17 +1,41 @@
 package com.example.spotly.viewmodel
 
+import com.example.spotly.data.model.AppError
+
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.spotly.data.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+
+data class AuthUiState(
+    val isAuthenticated: Boolean = false,
+    val isSessionLoading: Boolean = true,
+    val isLoading: Boolean = false,
+    val error: AppError? = null
+)
 
 class AuthViewModel : ViewModel() {
 
     private val repository = AuthRepository()
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage
+    private val _uiState = MutableStateFlow(AuthUiState())
+    val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
+    private var registrationInProgress = false
+
+    init {
+        viewModelScope.launch {
+            repository.observeAuthentication().collect { isAuthenticated ->
+                if (registrationInProgress && isAuthenticated) return@collect
+                _uiState.value = _uiState.value.copy(
+                    isAuthenticated = isAuthenticated,
+                    isSessionLoading = false,
+                    isLoading = false
+                )
+            }
+        }
+    }
 
     fun login(
         email: String,
@@ -19,28 +43,22 @@ class AuthViewModel : ViewModel() {
         onSuccess: () -> Unit
     ) {
         if (email.isBlank() || password.isBlank()) {
-            _errorMessage.value = "Completá todos los campos."
+            setError(AppError.RequiredFields)
             return
         }
 
         if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            _errorMessage.value = "Ingresá un correo electrónico válido."
+            setError(AppError.InvalidEmail)
             return
         }
 
-        _isLoading.value = true
-        _errorMessage.value = null
-
+        setLoading()
         repository.login(
-            email = email,
+            email = email.trim(),
             password = password,
-            onSuccess = {
-                _isLoading.value = false
-                onSuccess()
-            },
+            onSuccess = onSuccess,
             onError = { error ->
-                _isLoading.value = false
-                _errorMessage.value = error
+                _uiState.value = _uiState.value.copy(isLoading = false, error = error)
             }
         )
     }
@@ -52,54 +70,66 @@ class AuthViewModel : ViewModel() {
         confirmPassword: String,
         onSuccess: () -> Unit
     ) {
-        if (username.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank()) {
-            _errorMessage.value = "Completá todos los campos."
-            return
+        when {
+            username.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank() -> {
+                setError(AppError.RequiredFields)
+                return
+            }
+
+            username.trim().length < 3 -> {
+                setError(AppError.UsernameTooShort)
+                return
+            }
+
+            !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
+                setError(AppError.InvalidEmail)
+                return
+            }
+
+            password.length < 6 -> {
+                setError(AppError.PasswordTooShort)
+                return
+            }
+
+            password != confirmPassword -> {
+                setError(AppError.PasswordsDoNotMatch)
+                return
+            }
         }
 
-        if (username.trim().length < 3) {
-            _errorMessage.value = "El nombre de usuario debe tener al menos 3 caracteres."
-            return
-        }
-
-        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            _errorMessage.value = "Ingresá un correo electrónico válido."
-            return
-        }
-
-        if (password.length < 6) {
-            _errorMessage.value = "La contraseña debe tener al menos 6 caracteres."
-            return
-        }
-
-        if (password != confirmPassword) {
-            _errorMessage.value = "Las contraseñas no coinciden."
-            return
-        }
-
-        _isLoading.value = true
-        _errorMessage.value = null
-
+        setLoading()
+        registrationInProgress = true
         repository.register(
             username = username.trim().lowercase(),
-            email = email,
+            email = email.trim(),
             password = password,
             onSuccess = {
-                _isLoading.value = false
+                registrationInProgress = false
+                _uiState.value = _uiState.value.copy(
+                    isAuthenticated = true,
+                    isLoading = false,
+                    error = null
+                )
                 onSuccess()
             },
             onError = { error ->
-                _isLoading.value = false
-                _errorMessage.value = error
+                registrationInProgress = false
+                _uiState.value = _uiState.value.copy(isLoading = false, error = error)
             }
         )
     }
 
-    fun logout() {
-        repository.logout()
+    fun logout() = repository.logout()
+
+    fun clearError() {
+        _uiState.value = _uiState.value.copy(error = null)
     }
 
-    fun isUserLoggedIn(): Boolean {
-        return repository.isUserLoggedIn()
+    private fun setLoading() {
+        _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+    }
+
+    private fun setError(message: AppError) {
+        _uiState.value = _uiState.value.copy(isLoading = false, error = message)
     }
 }

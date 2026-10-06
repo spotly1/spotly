@@ -1,23 +1,40 @@
 package com.example.spotly.data.repository
 
-import android.content.Context
+import com.example.spotly.data.model.AppError
+
 import android.net.Uri
+import android.content.Context
+import com.cloudinary.android.preprocess.ImagePreprocessChain
+import com.cloudinary.android.preprocess.BitmapEncoder
 import com.cloudinary.android.MediaManager
 import com.cloudinary.android.callback.ErrorInfo
 import com.cloudinary.android.callback.UploadCallback
+import com.google.firebase.auth.FirebaseAuth
 
-class ImageRepository(
-    private val context: Context
-) {
+data class UploadedImage(
+    val url: String,
+    val publicId: String
+)
+
+class ImageRepository(context: Context) {
+    private val appContext = context.applicationContext
 
     fun uploadImage(
         imageUri: Uri,
-        onSuccess: (String) -> Unit,
-        onError: (String) -> Unit
+        forPost: Boolean = false,
+        onSuccess: (UploadedImage) -> Unit,
+        onError: (AppError) -> Unit
     ) {
-        MediaManager.get()
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        if (uid == null) {
+            onError(AppError.Unauthenticated)
+            return
+        }
+
+        val request = MediaManager.get()
             .upload(imageUri)
             .unsigned("spotly_unsigned")
+            .option("folder", "spotly/${if (forPost) "posts" else "profiles"}/$uid")
             .callback(object : UploadCallback {
 
                 override fun onStart(requestId: String) = Unit
@@ -33,11 +50,12 @@ class ImageRepository(
                     resultData: Map<*, *>
                 ) {
                     val imageUrl = resultData["secure_url"] as? String
+                    val publicId = resultData["public_id"] as? String
 
-                    if (imageUrl != null) {
-                        onSuccess(imageUrl)
+                    if (imageUrl != null && publicId != null) {
+                        onSuccess(UploadedImage(imageUrl, publicId))
                     } else {
-                        onError("No se pudo obtener la URL de la imagen.")
+                        onError(AppError.ImageResponseInvalid)
                     }
                 }
 
@@ -45,7 +63,7 @@ class ImageRepository(
                     requestId: String,
                     error: ErrorInfo
                 ) {
-                    onError(error.description)
+                    onError(AppError.ImageUploadFailed)
                 }
 
                 override fun onReschedule(
@@ -53,6 +71,12 @@ class ImageRepository(
                     error: ErrorInfo
                 ) = Unit
             })
-            .dispatch()
+        if (forPost) request.preprocess(postImagePreprocessing(imageUri))
+        request.dispatch(appContext)
     }
 }
+
+internal fun postImagePreprocessing(uri: Uri) =
+    ImagePreprocessChain.limitDimensionsChain(1600, 1600)
+        .loadWith(OrientedBitmapDecoder(uri))
+        .saveWith(BitmapEncoder(BitmapEncoder.Format.JPEG, 80))
