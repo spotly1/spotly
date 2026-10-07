@@ -14,3 +14,7 @@ local.properties
 /.firebase/
 /*-debug.log
 /*-debug.*.log
+**/src/test/
+**/src/androidTest/
+/tests/
+/firebase.rules-test.json

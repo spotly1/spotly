@@ -57,10 +57,8 @@ La búsqueda/listado de usuarios sigue bloqueada. Cambiar el archivo de reglas l
 
 ```powershell
 .\gradlew.bat :app:assembleDebug
-.\gradlew.bat :core:domain:test testDebugUnitTest lintDebug
+.\gradlew.bat lintDebug
 ```
-
-Las pruebas de interfaz están en las features de publicaciones y perfil y requieren un dispositivo. Las pruebas de seguridad están en `tests/firestore` y usan el emulador de Firebase, no la base real.
 
 ## Pendiente
 
