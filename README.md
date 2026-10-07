@@ -1,80 +1,65 @@
 # Spotly
 
-Spotly es una aplicación Android nativa para compartir descubrimientos urbanos. Los usuarios pueden crear una cuenta, configurar su perfil y publicar fotografías de edificios, murales, plazas, vehículos, carteles y otros elementos interesantes de la ciudad junto con una descripción y su ubicación.
+Aplicación Android para compartir descubrimientos urbanos mediante fotos, descripciones y ubicación.
 
-## Estado actual
+## Funcionalidades actuales
 
-- Registro e inicio de sesión con Firebase Authentication.
-- Sesión observada automáticamente ante cambios de Firebase.
-- Perfiles almacenados en Cloud Firestore.
-- Edición de descripción y foto de perfil.
-- Captura de imágenes con la cámara o selección desde la galería.
-- Almacenamiento de imágenes mediante Cloudinary.
-- Navegación principal construida con Jetpack Compose.
+- Registro, inicio y cierre de sesión con Firebase Authentication.
+- Perfil con username, descripción y foto editable.
+- Creación de publicaciones con cámara o galería y ubicación opcional.
+- Feed con las últimas 50 publicaciones.
+- Cuadrícula de publicaciones propias y vista de detalle.
+- Dirección aproximada y mapa integrado de OpenStreetMap.
+- Compresión de fotos y almacenamiento en Cloudinary.
 
-## Tecnologías
+## Tecnologías y arquitectura
 
-- Kotlin
-- Jetpack Compose y Material 3
-- MVVM
-- Navigation Compose
-- Firebase Authentication
-- Cloud Firestore y Firestore Security Rules
-- Cloud Functions
-- Cloudinary
-- Coil
+Kotlin, Jetpack Compose, Material 3, Navigation Compose con `NavController`, Firebase Authentication, Firestore, Cloudinary y Coil.
 
-## Configuración de Firebase en Android
+El proyecto usa MVVM y está dividido en 10 módulos:
 
-El archivo `google-services.json` no se incluye en el repositorio. Cada integrante autorizado debe obtenerlo desde Firebase Console:
+- `app`: inicio, navegación e inyección manual con `AppContainer`.
+- `features:auth`, `posts`, `profile` y `search`: pantallas por funcionalidad; búsqueda todavía es una pantalla provisional.
+- `core:domain`: modelos, interfaces de repositorios y casos de uso en Kotlin puro.
+- `core:data`: implementaciones de repositorios y mappers.
+- `core:network`: clientes externos, DTO y preparación de imágenes.
+- `core:database`: caché de direcciones en memoria; todavía no usa Room.
+- `core:ui`: componentes, tema y recursos compartidos.
 
-1. Abrir el proyecto de Spotly en [Firebase Console](https://console.firebase.google.com/).
-2. Ingresar a **Configuración del proyecto**.
-3. Seleccionar la aplicación Android con el paquete `com.example.spotly`.
-4. Descargar `google-services.json`.
-5. Copiarlo en `Spotly/app/google-services.json`.
+Las Routes conectan los ViewModels con las Screens, que reciben datos y callbacks. Los ViewModels usan `StateFlow` y estados `sealed`; los resultados de operaciones usan `AppResult`. Guardar y publicar generan estados que la Route consume al navegar. Las features dependen del dominio y la UI compartida, no de las implementaciones de datos.
 
-Sin este archivo, la aplicación no puede conectarse al proyecto de Firebase.
+## Cómo ejecutarlo
 
-## Backend y seguridad
+1. Clonar el repositorio y abrir la carpeta raíz en Android Studio.
+2. Obtener `google-services.json` de un integrante autorizado o desde Firebase Console → Configuración del proyecto → app Android `com.example.spotly`.
+3. Copiarlo en `app/google-services.json` (está excluido de Git).
+4. Sincronizar Gradle y ejecutar `app` en un emulador o celular con Android 8.0 / API 26 o superior.
 
-Las reglas están en `firestore.rules`. Los datos se guardan separados:
+Al usar el Firebase del equipo no hay que volver a publicar reglas por cada clonación. Para usar un backend propio, hay que configurar Authentication, Firestore y Cloudinary, adaptar sus valores y publicar las reglas correspondientes; no alcanza con cambiar el JSON.
 
-- `users/{uid}`: username, descripción, URL y publicId de la foto. Un usuario autenticado puede consultar un perfil concreto. Las escrituras solo admiten estos campos públicos.
-- `privateUsers/{uid}`: email, legible únicamente por su dueño.
-- `usernames/{username}`: reserva del nombre asociada al uid.
+## Datos y seguridad
 
-Los listados permanecen bloqueados hasta implementar la búsqueda con consultas compatibles.
+Las reglas del repositorio están en `firestore.rules`:
 
-El registro crea los tres documentos en una única transacción. Las reglas comprueban que coincidan, que el email privado sea el de Firebase Authentication y que no se puedan reservar nombres adicionales ni apropiarse de reservas existentes. Solo se permite consultar un nombre concreto estando autenticado. La pantalla propia combina el perfil público con el email de su documento privado.
+- `users`: perfiles públicos para usuarios autenticados; cada dueño edita su descripción y foto.
+- `privateUsers`: email privado, accesible únicamente por su dueño.
+- `usernames`: reservas de nombres únicos.
+- `posts`: publicaciones consultables por usuarios autenticados; creación validada para su autor. Edición y eliminación todavía bloqueadas.
 
-Las actualizaciones solo permiten descripción y foto, y validan todos los campos del perfil. Una foto requiere URL de nuestro entorno de Cloudinary e identificador bajo la carpeta del usuario. Para quitarla, ambos campos deben quedar vacíos.
+La búsqueda/listado de usuarios sigue bloqueada. Cambiar el archivo de reglas local no actualiza Firebase automáticamente.
 
-El cliente no puede eliminar perfiles ni reservas: el borrado de cuenta necesitará un flujo de servidor que limpie ambos. Las demás colecciones permanecen bloqueadas. Estas reglas solo se activan al publicarlas; cambiar el archivo local no cambia Firebase.
-
-Para comprobar las reglas con una base desechable (Node y Java requeridos):
+## Validación
 
 ```powershell
-cd tests/firestore
-npm ci
-npm test
+.\gradlew.bat :app:assembleDebug
+.\gradlew.bat :core:domain:test testDebugUnitTest lintDebug
 ```
 
-Las pruebas utilizan exclusivamente el emulador y el proyecto ficticio `demo-spotly-rules`: verifican registro, privacidad del email, reservas de nombres, validaciones de fotos y rechazos de acceso ajeno.
+Las pruebas de interfaz están en las features de publicaciones y perfil y requieren un dispositivo. Las pruebas de seguridad están en `tests/firestore` y usan el emulador de Firebase, no la base real.
 
-## Ejecución de Android
+## Pendiente
 
-1. Clonar el repositorio.
-2. Agregar `app/google-services.json`.
-3. Abrir el proyecto con Android Studio.
-4. Sincronizar Gradle.
-5. Ejecutarlo en un emulador o dispositivo con Android API 26 o superior.
-
-## Próximas funcionalidades
-
-- Creación, edición y eliminación de publicaciones.
-- Feed y detalle de publicaciones.
-- Geolocalización y mapa.
-- Búsqueda de usuarios.
-- Likes y seguimiento de usuarios.
+- Edición y eliminación de publicaciones.
+- Búsqueda de usuarios, likes y seguimiento.
 - Notificaciones.
+- Caché offline con Room.

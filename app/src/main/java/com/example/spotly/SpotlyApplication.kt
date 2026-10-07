@@ -1,17 +1,12 @@
 package com.example.spotly
 
 import android.app.Application
-import com.cloudinary.android.MediaManager
+import com.example.spotly.network.initializeImageService
 
 class SpotlyApplication : Application() {
-
+    val container by lazy { AppContainer(this) }
     override fun onCreate() {
         super.onCreate()
-
-        val config = mapOf(
-            "cloud_name" to "iufz7yvd"
-        )
-
-        MediaManager.init(this, config)
+        initializeImageService(this)
     }
 }

@@ -1,6 +1,8 @@
 package com.example.spotly
 
 import android.os.Bundle
+import androidx.compose.runtime.CompositionLocalProvider
+import com.example.spotly.ui.components.LocalAddressRepository
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.setContent
@@ -13,8 +15,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            SpotlyTheme {
-                SpotlyNavigation()
+            val container = (application as SpotlyApplication).container
+            CompositionLocalProvider(LocalAddressRepository provides container.addressRepository) {
+                SpotlyTheme { SpotlyNavigation(container) }
             }
         }
     }

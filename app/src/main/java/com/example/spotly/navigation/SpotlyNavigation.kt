@@ -26,14 +26,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.spotly.ui.components.localizedMessage
-import com.example.spotly.R
-import com.example.spotly.ui.auth.LoginScreen
-import com.example.spotly.ui.auth.RegisterScreen
-import com.example.spotly.ui.feed.FeedScreen
-import com.example.spotly.ui.post.CreatePostScreen
-import com.example.spotly.ui.profile.EditProfileScreen
-import com.example.spotly.ui.profile.ProfileScreen
+import com.example.spotly.core.ui.R
+import com.example.spotly.ui.auth.LoginRoute
+import com.example.spotly.ui.auth.RegisterRoute
+import com.example.spotly.ui.feed.FeedRoute
+import com.example.spotly.ui.post.CreatePostRoute
+import com.example.spotly.ui.profile.EditProfileRoute
+import com.example.spotly.ui.profile.ProfileRoute
 import com.example.spotly.ui.search.SearchScreen
 import com.example.spotly.viewmodel.AuthViewModel
 import com.example.spotly.viewmodel.ProfileViewModel
@@ -49,10 +48,10 @@ private object Route {
 }
 
 @Composable
-fun SpotlyNavigation() {
+fun SpotlyNavigation(container: com.example.spotly.AppContainer) {
     val navController = rememberNavController()
-    val authViewModel: AuthViewModel = viewModel()
-    val profileViewModel: ProfileViewModel = viewModel()
+    val authViewModel: AuthViewModel = viewModel(factory = container.authFactory)
+    val profileViewModel: ProfileViewModel = viewModel(factory = container.profileFactory)
     val authState by authViewModel.uiState.collectAsStateWithLifecycle()
 
     if (authState.isSessionLoading) {
@@ -100,23 +99,21 @@ fun SpotlyNavigation() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Route.Login) {
-                LoginScreen(
+                LoginRoute(
                     viewModel = authViewModel,
-                    onRegisterClick = { navController.navigate(Route.Register) },
-                    onLoginSuccess = {}
+                    onRegisterClick = { navController.navigate(Route.Register) }
                 )
             }
             composable(Route.Register) {
-                RegisterScreen(
+                RegisterRoute(
                     viewModel = authViewModel,
-                    onLoginClick = { navController.popBackStack() },
-                    onRegisterSuccess = {}
+                    onLoginClick = { navController.popBackStack() }
                 )
             }
-            composable(Route.Feed) { FeedScreen() }
+            composable(Route.Feed) { FeedRoute(viewModel(factory = container.feedFactory)) }
             composable(Route.Search) { SearchScreen() }
             composable(Route.CreatePost) {
-                CreatePostScreen(onPublished = {
+                CreatePostRoute(viewModel = viewModel(factory = container.createPostFactory), onPublished = {
                     navController.navigate(Route.Feed) {
                         popUpTo(Route.Feed) { inclusive = false }
                         launchSingleTop = true
@@ -124,28 +121,17 @@ fun SpotlyNavigation() {
                 })
             }
             composable(Route.Profile) {
-                ProfileScreen(
+                ProfileRoute(
                     viewModel = profileViewModel,
                     onEditProfileClick = { navController.navigate(Route.EditProfile) },
                     onLogoutClick = authViewModel::logout
                 )
             }
             composable(Route.EditProfile) {
-                val profileState by profileViewModel.uiState.collectAsStateWithLifecycle()
-                profileState.user?.let { currentUser ->
-                    EditProfileScreen(
-                        user = currentUser,
-                        isLoading = profileState.isLoading,
-                        errorMessage = profileState.error?.localizedMessage(),
-                        onSaveClick = { description, imageUri, removeCurrentImage ->
-                            profileViewModel.updateProfile(
-                                description,
-                                imageUri,
-                                removeCurrentImage
-                            ) { navController.popBackStack() }
-                        }
-                    )
-                }
+                EditProfileRoute(
+                    viewModel = profileViewModel,
+                    onSaved = { navController.popBackStack() }
+                )
             }
         }
     }
