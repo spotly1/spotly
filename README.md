@@ -2,6 +2,11 @@
 
 Aplicación Android para compartir descubrimientos urbanos mediante fotos, descripciones y ubicación.
 
+## Integrantes
+
+- Agustin Cabeda
+- Bruno Said
+
 ## Funcionalidades actuales
 
 - Registro, inicio y cierre de sesión con Firebase Authentication.
