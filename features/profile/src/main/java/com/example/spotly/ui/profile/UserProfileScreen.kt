@@ -16,7 +16,10 @@ fun UserProfileScreen(
         }
 
         is UserProfileUiState.Error -> {
-            ProfileError(uiState.error.localizedMessage())
+            ProfileError(
+                message = uiState.error.localizedMessage(),
+                onRetry = onRetry
+            )
         }
 
         is UserProfileUiState.Success -> {

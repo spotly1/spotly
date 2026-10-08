@@ -93,8 +93,9 @@ service cloud.firestore {
         || request.query.limit <= 50);
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly([
-          'authorId', 'username', 'imageUrl', 'imagePublicId', 'description', 'createdAt', 'location'
+          'authorId', 'imageUrl', 'imagePublicId', 'description', 'createdAt', 'location'
         ])
+        && request.resource.data.authorId == request.auth.uid
         && request.resource.data.authorId == request.auth.uid
         && request.resource.data.username == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.username
         && request.resource.data.description is string

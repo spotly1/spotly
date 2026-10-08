@@ -14,6 +14,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.spotly.ui.components.localizedMessage
 import com.example.spotly.core.ui.R
+import androidx.compose.material3.Button
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 
 @Composable
 fun ProfileScreen(
@@ -49,13 +52,22 @@ internal fun LoadingProfile() {
 }
 
 @Composable
-internal fun ProfileError(message: String) {
+internal fun ProfileError(
+    message: String,
+    onRetry: (() -> Unit)? = null
+) {
     Column(
         Modifier.fillMaxSize().padding(24.dp),
         Arrangement.Center,
         Alignment.CenterHorizontally
     ) {
         Text(message.ifBlank { stringResource(R.string.profile_load_error) })
+
+        if (onRetry != null) {
+            Spacer(Modifier.height(16.dp))
+            Button(onClick = onRetry) {
+                Text(stringResource(R.string.retry))
+            }
+        }
     }
 }
-
