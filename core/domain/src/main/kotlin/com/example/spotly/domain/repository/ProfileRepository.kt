@@ -9,4 +9,8 @@ interface ProfileRepository {
         description: String, profileImageUrl: String, profileImagePublicId: String,
         onResult: (AppResult<Unit>) -> Unit
     )
+    fun getUserProfile(
+        uid: String,
+        onResult: (AppResult<User>) -> Unit
+    )
 }

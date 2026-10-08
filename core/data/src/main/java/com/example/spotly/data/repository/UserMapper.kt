@@ -19,3 +19,13 @@ internal fun UserDto.toProfileUpdates(): Map<String, String> = mapOf(
     "profileImageUrl" to profileImageUrl,
     "profileImagePublicId" to profileImagePublicId
 )
+
+internal fun UserDto.toPublicDomain(uid: String): User {
+    return User(
+        uid = uid,
+        username = username,
+        description = description,
+        profileImageUrl = profileImageUrl,
+        profileImagePublicId = profileImagePublicId
+    )
+}

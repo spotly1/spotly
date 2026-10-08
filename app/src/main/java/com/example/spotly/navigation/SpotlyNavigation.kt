@@ -36,6 +36,7 @@ import com.example.spotly.ui.profile.ProfileRoute
 import com.example.spotly.ui.search.SearchScreen
 import com.example.spotly.viewmodel.AuthViewModel
 import com.example.spotly.viewmodel.ProfileViewModel
+import com.example.spotly.ui.profile.UserProfileRoute
 
 private object Route {
     const val Login = "login"
@@ -45,6 +46,9 @@ private object Route {
     const val CreatePost = "create_post"
     const val Profile = "profile"
     const val EditProfile = "edit_profile"
+
+    const val UserProfile = "user_profile/{uid}"
+    fun userProfile(uid: String) = "user_profile/$uid"
 }
 
 @Composable
@@ -110,7 +114,18 @@ fun SpotlyNavigation(container: com.example.spotly.AppContainer) {
                     onLoginClick = { navController.popBackStack() }
                 )
             }
-            composable(Route.Feed) { FeedRoute(viewModel(factory = container.feedFactory)) }
+            composable(Route.Feed) {
+                FeedRoute(
+                    viewModel = viewModel(factory = container.feedFactory),
+                    onUserClick = { uid ->
+                        if (uid == authViewModel.currentUserId()) {
+                            navController.navigateMain(Route.Profile)
+                        } else {
+                            navController.navigate(Route.userProfile(uid))
+                        }
+                    }
+                )
+            }
             composable(Route.Search) { SearchScreen() }
             composable(Route.CreatePost) {
                 CreatePostRoute(viewModel = viewModel(factory = container.createPostFactory), onPublished = {
@@ -133,6 +148,14 @@ fun SpotlyNavigation(container: com.example.spotly.AppContainer) {
                     onSaved = { navController.popBackStack() }
                 )
             }
+            composable(Route.UserProfile) { backStackEntry ->
+                val uid = backStackEntry.arguments?.getString("uid") ?: return@composable
+
+                UserProfileRoute(
+                    uid = uid,
+                    viewModel = viewModel(factory = container.userProfileFactory)
+                )
+            }
         }
     }
 }
@@ -153,6 +176,12 @@ private fun RowScope.NavigationItem(
 }
 
 private fun androidx.navigation.NavHostController.navigateMain(route: String) {
+    if (currentDestination?.route == route) return
+
+    if (route == Route.Feed && popBackStack(Route.Feed, inclusive = false)) {
+        return
+    }
+
     navigate(route) {
         popUpTo(Route.Feed) { saveState = true }
         launchSingleTop = true

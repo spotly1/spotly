@@ -46,9 +46,21 @@ class AndroidAddressRepository(context: Context) : AddressRepository {
                     geocoder.getFromLocation(point.latitude, point.longitude, 1)?.firstOrNull()
                 }
             }
-            address?.getAddressLine(0)?.trim()?.takeIf { it.isNotEmpty() }
+            val shortAddress = address?.let {
+                val city = it.locality ?: it.subAdminArea
+                val region = it.adminArea
+
+                listOfNotNull(city, region)
+                    .filter { part -> part.isNotBlank() }
+                    .distinct()
+                    .joinToString(", ")
+                    .ifBlank { it.countryName ?: "" }
+            }
+
+            shortAddress?.takeIf { it.isNotBlank() }
                 ?.also { cache.put(key, it) }
-                ?.let { AppResult.Success(it) } ?: AppResult.Error(AppError.AddressUnavailable)
+                ?.let { AppResult.Success(it) }
+                ?: AppResult.Error(AppError.AddressUnavailable)
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Exception) {

@@ -21,12 +21,10 @@ internal fun PostDto.toDomain(id: String) = Post(
 
 internal fun UploadedImage.toCreatePostDto(
     authorId: String,
-    username: String,
     description: String,
     location: LocationPoint?
 ) = CreatePostDto(
     authorId = authorId,
-    username = username,
     imageUrl = url,
     imagePublicId = publicId,
     description = description,

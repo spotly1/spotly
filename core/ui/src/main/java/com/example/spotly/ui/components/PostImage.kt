@@ -34,7 +34,10 @@ fun PostImage(
         key(url, attempt) {
             AsyncImage(
                 model = url, contentDescription = contentDescription,
-                modifier = Modifier.matchParentSize(), contentScale = contentScale,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight(),
+                contentScale = contentScale,
                 onLoading = { loading = true; failed = false },
                 onSuccess = { loading = false; failed = false },
                 onError = { loading = false; failed = true }

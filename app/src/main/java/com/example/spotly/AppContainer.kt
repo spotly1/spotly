@@ -23,12 +23,21 @@ class AppContainer(context: Context) {
 
     val authFactory = viewModelFactory { initializer {
         AuthViewModel(LoginUseCase(auth, emailValidator), RegisterUseCase(auth, emailValidator),
-            ObserveAuthenticationUseCase(auth), LogoutUseCase(auth))
+            ObserveAuthenticationUseCase(auth), LogoutUseCase(auth), GetCurrentUserIdUseCase(auth))
     } }
     val profileFactory = viewModelFactory { initializer {
         ProfileViewModel(GetCurrentProfileUseCase(profiles), UpdateProfileUseCase(profiles, images),
             ObserveUserPostsUseCase(posts))
     } }
+
+    val userProfileFactory = viewModelFactory {
+        initializer {
+            UserProfileViewModel(
+                GetUserProfileUseCase(profiles),
+                ObserveUserPostsUseCase(posts)
+            )
+        }
+    }
     val feedFactory = viewModelFactory { initializer { FeedViewModel(ObserveFeedUseCase(posts)) } }
     // El caso de publicación conserva el borrador: debe ser una instancia por ViewModel, no global.
     val createPostFactory = viewModelFactory { initializer {

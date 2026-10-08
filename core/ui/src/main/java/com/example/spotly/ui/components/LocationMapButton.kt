@@ -2,6 +2,7 @@ package com.example.spotly.ui.components
 
 import android.annotation.SuppressLint
 import android.webkit.*
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,6 +23,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 
 @Composable
 fun LocationMapButton(point: LocationPoint) {
@@ -42,13 +44,18 @@ fun LocationAddressButton(point: LocationPoint, address: String?) {
     var show by remember(point) { mutableStateOf(false) }
     val label = address ?: stringResource(R.string.location_selected)
     val action = stringResource(R.string.location_map)
-    TextButton(
-        onClick = { show = true },
-        modifier = Modifier.semantics { contentDescription = action },
-        colors = ButtonDefaults.textButtonColors(
-            contentColor = if (isSystemInDarkTheme()) Color(0xFF90CAF9) else Color(0xFF1565C0)
-        )
-    ) { Text(label, textAlign = TextAlign.Start) }
+
+    Text(
+        text = label,
+        modifier = Modifier
+            .clickable(onClickLabel = action) { show = true },
+        style = MaterialTheme.typography.bodySmall,
+        color = if (isSystemInDarkTheme()) Color(0xFF90CAF9) else Color(0xFF1565C0),
+        textAlign = TextAlign.Start,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis
+    )
+
     if (show) LocationMapDialog(point) { show = false }
 }
 

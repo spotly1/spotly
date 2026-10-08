@@ -81,4 +81,39 @@ class FirebaseProfileRepository(services: com.example.spotly.network.FirebaseSer
                 onResult(AppResult.Error(AppError.ProfileUpdateFailed))
             }
     }
+
+    override fun getUserProfile(
+        uid: String,
+        onResult: (AppResult<User>) -> Unit
+    ) {
+        if (auth.currentUser == null) {
+            onResult(AppResult.Error(AppError.Unauthenticated))
+            return
+        }
+
+        db.collection("users")
+            .document(uid)
+            .get()
+            .addOnSuccessListener { document ->
+                if (!document.exists()) {
+                    onResult(AppResult.Error(AppError.ProfileNotFound))
+                    return@addOnSuccessListener
+                }
+
+                val user = runCatching {
+                    val dto = document.toObject(UserDto::class.java)
+                        ?: error("Missing public profile")
+
+                    dto.toPublicDomain(document.id)
+                }
+
+                user.fold(
+                    onSuccess = { onResult(AppResult.Success(it)) },
+                    onFailure = { onResult(AppResult.Error(AppError.ProfileLoadFailed)) }
+                )
+            }
+            .addOnFailureListener {
+                onResult(AppResult.Error(AppError.ProfileLoadFailed))
+            }
+    }
 }

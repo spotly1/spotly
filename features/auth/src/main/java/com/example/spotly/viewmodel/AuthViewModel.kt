@@ -13,7 +13,8 @@ class AuthViewModel(
     private val loginUseCase: LoginUseCase,
     private val registerUseCase: RegisterUseCase,
     private val observeAuthentication: ObserveAuthenticationUseCase,
-    private val logoutUseCase: LogoutUseCase
+    private val logoutUseCase: LogoutUseCase,
+    private val getCurrentUserId: GetCurrentUserIdUseCase
 ) : ViewModel() {
     private val state = MutableStateFlow<AuthUiState>(AuthUiState.Initializing)
     val uiState: StateFlow<AuthUiState> = state.asStateFlow()
@@ -57,6 +58,8 @@ class AuthViewModel(
     }
 
     fun logout() = logoutUseCase()
+
+    fun currentUserId(): String? = getCurrentUserId()
 
     fun clearError() {
         if (state.value is AuthUiState.Error) state.value = AuthUiState.Idle
