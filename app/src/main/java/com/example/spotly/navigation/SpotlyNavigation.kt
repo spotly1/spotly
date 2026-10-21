@@ -31,6 +31,7 @@ import com.example.spotly.ui.auth.LoginRoute
 import com.example.spotly.ui.auth.RegisterRoute
 import com.example.spotly.ui.feed.FeedRoute
 import com.example.spotly.ui.post.CreatePostRoute
+import com.example.spotly.ui.post.PostDetailRoute
 import com.example.spotly.ui.profile.EditProfileRoute
 import com.example.spotly.ui.profile.ProfileRoute
 import com.example.spotly.ui.search.SearchScreen
@@ -44,6 +45,8 @@ private object Route {
     const val Feed = "feed"
     const val Search = "search"
     const val CreatePost = "create_post"
+    const val PostDetail = "post/{postId}"
+    fun postDetail(id: String) = "post/${android.net.Uri.encode(id)}"
     const val Profile = "profile"
     const val EditProfile = "edit_profile"
 
@@ -117,6 +120,7 @@ fun SpotlyNavigation(container: com.example.spotly.AppContainer) {
             composable(Route.Feed) {
                 FeedRoute(
                     viewModel = viewModel(factory = container.feedFactory),
+                    onPostClick = { navController.navigate(Route.postDetail(it)) { launchSingleTop = true } },
                     onUserClick = { uid ->
                         if (uid == authViewModel.currentUserId()) {
                             navController.navigateMain(Route.Profile)
@@ -127,6 +131,13 @@ fun SpotlyNavigation(container: com.example.spotly.AppContainer) {
                 )
             }
             composable(Route.Search) { SearchScreen() }
+            composable(Route.PostDetail) { entry ->
+                val postId = entry.arguments?.getString("postId") ?: return@composable
+                PostDetailRoute(
+                    viewModel = viewModel(factory = container.postDetailFactory(postId)),
+                    onBack = { navController.popBackStack() }
+                )
+            }
             composable(Route.CreatePost) {
                 CreatePostRoute(viewModel = viewModel(factory = container.createPostFactory), onPublished = {
                     navController.navigate(Route.Feed) {
@@ -139,7 +150,8 @@ fun SpotlyNavigation(container: com.example.spotly.AppContainer) {
                 ProfileRoute(
                     viewModel = profileViewModel,
                     onEditProfileClick = { navController.navigate(Route.EditProfile) },
-                    onLogoutClick = authViewModel::logout
+                    onLogoutClick = authViewModel::logout,
+                    onPostClick = { navController.navigate(Route.postDetail(it)) { launchSingleTop = true } }
                 )
             }
             composable(Route.EditProfile) {
@@ -153,7 +165,8 @@ fun SpotlyNavigation(container: com.example.spotly.AppContainer) {
 
                 UserProfileRoute(
                     uid = uid,
-                    viewModel = viewModel(factory = container.userProfileFactory)
+                    viewModel = viewModel(factory = container.userProfileFactory),
+                    onPostClick = { navController.navigate(Route.postDetail(it)) { launchSingleTop = true } }
                 )
             }
         }

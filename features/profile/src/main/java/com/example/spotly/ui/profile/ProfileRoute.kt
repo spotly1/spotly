@@ -10,10 +10,11 @@ import com.example.spotly.viewmodel.ProfileViewModel
 fun ProfileRoute(
     viewModel: ProfileViewModel,
     onEditProfileClick: () -> Unit,
-    onLogoutClick: () -> Unit
+    onLogoutClick: () -> Unit,
+    onPostClick: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) { viewModel.loadCurrentUserProfile() }
-    ProfileScreen(uiState, onEditProfileClick, onLogoutClick, viewModel::loadCurrentUserProfile)
+    ProfileScreen(uiState, onEditProfileClick, onLogoutClick, viewModel::loadCurrentUserProfile, onPostClick)
 }

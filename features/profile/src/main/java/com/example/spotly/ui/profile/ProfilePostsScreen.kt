@@ -24,7 +24,8 @@ internal fun ProfilePostsScreen(
     postsState: ProfilePostsState,
     selectedPostId: String,
     onBack: () -> Unit,
-    onRetry: () -> Unit
+    onRetry: () -> Unit,
+    onPostClick: (String) -> Unit
 ) {
     Column(Modifier.fillMaxSize()) {
         TopAppBar(
@@ -96,6 +97,9 @@ internal fun ProfilePostsScreen(
 
                                 post.location?.let {
                                     LocationMapButton(it)
+                                }
+                                TextButton(onClick = { onPostClick(post.id) }) {
+                                    Text(stringResource(R.string.open_post))
                                 }
                             }
                         }

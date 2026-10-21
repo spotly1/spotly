@@ -8,13 +8,15 @@ import com.example.spotly.viewmodel.FeedViewModel
 @Composable
 fun FeedRoute(
     viewModel: FeedViewModel,
-    onUserClick: (String) -> Unit
+    onUserClick: (String) -> Unit,
+    onPostClick: (String) -> Unit
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     FeedScreen(
         state = state,
         onRetry = viewModel::retry,
-        onUserClick = onUserClick
+        onUserClick = onUserClick,
+        onPostClick = onPostClick
     )
 }

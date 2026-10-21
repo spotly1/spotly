@@ -84,4 +84,20 @@
     <string name="map_failed">No se pudo cargar el mapa. Revisá tu conexión.</string>
     <string name="map_attribution">© OpenStreetMap contributors</string>
     <string name="map_loading">Cargando mapa…</string>
+    <string name="post_detail">Publicación</string>
+    <string name="post_edit">Editar publicación</string>
+    <string name="post_delete">Eliminar publicación</string>
+    <string name="post_delete_confirm">¿Eliminar esta publicación? Ya no aparecerá en el feed ni en el perfil. Esta acción no se puede deshacer.</string>
+    <string name="post_deleting">Eliminando…</string>
+    <string name="post_edit_notice">Podés modificar la descripción. La foto y la ubicación se conservan.</string>
+    <string name="post_saved">Cambios guardados.</string>
+    <string name="cancel">Cancelar</string>
+    <string name="back">Volver</string>
+    <string name="error_post_not_found">Esta publicación ya no está disponible.</string>
+    <string name="error_post_load">No se pudo cargar la publicación. Revisá tu conexión e intentá nuevamente.</string>
+    <string name="error_post_update">No se pudieron guardar los cambios. Intentá nuevamente.</string>
+    <string name="error_post_delete">No se pudo eliminar la publicación. Intentá nuevamente.</string>
+    <string name="error_post_permission">No tenés permiso para realizar esta acción.</string>
+    <string name="error_post_description">Ingresá una descripción de entre 1 y 1000 caracteres.</string>
+    <string name="post_options">Opciones de la publicación</string>
 </resources>

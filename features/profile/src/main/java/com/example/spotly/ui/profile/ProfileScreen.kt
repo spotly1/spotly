@@ -23,7 +23,8 @@ fun ProfileScreen(
     uiState: ProfileUiState,
     onEditProfileClick: () -> Unit,
     onLogoutClick: () -> Unit,
-    onRetryPosts: () -> Unit
+    onRetryPosts: () -> Unit,
+    onPostClick: (String) -> Unit
 ) {
     when (uiState) {
         ProfileUiState.Loading -> LoadingProfile()
@@ -38,7 +39,8 @@ fun ProfileScreen(
                 isOwnProfile = true,
                 onEditProfileClick = onEditProfileClick,
                 onLogoutClick = onLogoutClick,
-                onRetryPosts = onRetryPosts
+                onRetryPosts = onRetryPosts,
+                onPostClick = onPostClick
             )
         }
     }

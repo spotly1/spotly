@@ -43,6 +43,7 @@ dependencies {
     implementation(project(":core:network"))
     implementation(project(":core:ui"))
     implementation(project(":features:auth"))
+    implementation(project(":features:feed"))
     implementation(project(":features:posts"))
     implementation(project(":features:profile"))
     implementation(project(":features:search"))
