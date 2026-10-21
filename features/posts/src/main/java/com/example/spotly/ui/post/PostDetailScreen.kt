@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -41,7 +42,8 @@ fun PostDetailScreen(
     onDescriptionChange: (String) -> Unit,
     onCancelEdit: () -> Unit,
     onSave: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onUserClick: (String) -> Unit,
 ) {
     val content = state as? PostDetailUiState.Content
     val busy = content?.action?.let { it != PostAction.None } == true
@@ -74,15 +76,35 @@ fun PostDetailScreen(
             is PostDetailUiState.Content -> Column(
                 Modifier.align(Alignment.CenterHorizontally).widthIn(max = 720.dp).fillMaxWidth()
                     .weight(1f).imePadding().verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+                    .padding(vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    UserAvatar(imageUrl = state.post.profileImageUrl, username = state.post.username, size = 44.dp)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    UserAvatar(
+                        imageUrl = state.post.profileImageUrl,
+                        username = state.post.username,
+                        size = 44.dp,
+                        modifier = Modifier.clickable {
+                            onUserClick(state.post.authorId)
+                        }
+                    )
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                        Text(stringResource(R.string.profile_username, state.post.username),
-                            style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
-                            maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(
+                            stringResource(R.string.profile_username, state.post.username),
+                            modifier = Modifier.clickable {
+                                onUserClick(state.post.authorId)
+                            },
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                         state.post.createdAt?.let { date ->
                             val formatted = remember(date) {
                                 DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
@@ -110,11 +132,14 @@ fun PostDetailScreen(
                         }
                     }
                 }
-                PostImage(model = state.post.imageUrl, contentDescription = state.post.description,
-                    maxPixels = 1600, modifier = Modifier.fillMaxWidth().aspectRatio(1f)
-                        .clip(RoundedCornerShape(24.dp)).background(MaterialTheme.colorScheme.surfaceContainerLow),
-                    contentScale = ContentScale.Fit)
-                state.post.location?.let { LocationMapButton(it) }
+                PostImage(
+                    model = state.post.imageUrl,
+                    contentDescription = state.post.description,
+                    maxPixels = 1600,
+                    modifier = Modifier.fillMaxWidth(),
+                    contentScale = ContentScale.FillWidth
+                )
+
                 if (state.isEditing) {
                     Text(stringResource(R.string.post_edit_notice), style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -123,7 +148,27 @@ fun PostDetailScreen(
                         shape = RoundedCornerShape(16.dp),
                         label = { Text(stringResource(R.string.description)) },
                         supportingText = { Text(stringResource(R.string.post_character_count, state.description.length, 1000)) })
-                } else Text(state.post.description, style = MaterialTheme.typography.bodyLarge)
+                } else Text(
+                    text = state.post.description,
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Box(
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                ) {
+                    state.post.location?.let {
+                        LocationMapButton(it)
+                    }
+                }
+                state.post.location?.let { location ->
+                    LocationMap(
+                        point = location,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(220.dp)
+                            .padding(horizontal = 8.dp)
+                    )
+                }
                 state.error?.let {
                     Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.errorContainer) {
                         Text(it.localizedMessage(), Modifier.fillMaxWidth().padding(16.dp),

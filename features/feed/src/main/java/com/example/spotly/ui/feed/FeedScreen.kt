@@ -25,6 +25,7 @@ import com.example.spotly.ui.components.localizedMessage
 import com.example.spotly.viewmodel.FeedUiState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import com.example.spotly.ui.components.UserAvatar
 
@@ -37,19 +38,27 @@ fun FeedScreen(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(20.dp),
+        contentPadding = PaddingValues(vertical = 20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
             Text(
                 stringResource(R.string.home),
+                modifier = Modifier.padding(horizontal = 12.dp),
                 style = MaterialTheme.typography.headlineSmall
             )
         }
 
         when (state) {
             FeedUiState.Loading -> item {
-                CircularProgressIndicator()
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 48.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
             }
 
             is FeedUiState.Error -> item {
@@ -74,7 +83,13 @@ fun FeedScreen(
                         mutableStateOf(false)
                     }
 
-                    Card(Modifier.fillMaxWidth()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RectangleShape,
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.background
+                        )
+                    ) {
                         Column {
                             Row(
                                 modifier = Modifier

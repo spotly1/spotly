@@ -135,7 +135,16 @@ fun SpotlyNavigation(container: com.example.spotly.AppContainer) {
                 val postId = entry.arguments?.getString("postId") ?: return@composable
                 PostDetailRoute(
                     viewModel = viewModel(factory = container.postDetailFactory(postId)),
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    onUserClick = { uid ->
+                        if (uid == authViewModel.currentUserId()) {
+                            navController.navigateMain(Route.Profile)
+                        } else {
+                            navController.navigate(Route.userProfile(uid)) {
+                                launchSingleTop = true
+                            }
+                        }
+                    }
                 )
             }
             composable(Route.CreatePost) {
@@ -195,9 +204,13 @@ private fun androidx.navigation.NavHostController.navigateMain(route: String) {
         return
     }
 
+    if (route == Route.Profile && popBackStack(Route.Profile, inclusive = false)) {
+        return
+    }
+
     navigate(route) {
         popUpTo(Route.Feed) { saveState = true }
         launchSingleTop = true
-        restoreState = true
+        restoreState = route != Route.Profile
     }
 }

@@ -9,7 +9,11 @@ import com.example.spotly.viewmodel.PostDetailUiState
 import com.example.spotly.viewmodel.PostDetailViewModel
 
 @Composable
-fun PostDetailRoute(viewModel: PostDetailViewModel, onBack: () -> Unit) {
+fun PostDetailRoute(
+    viewModel: PostDetailViewModel,
+    onBack: () -> Unit,
+    onUserClick: (String) -> Unit
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val currentOnBack by rememberUpdatedState(onBack)
@@ -20,6 +24,15 @@ fun PostDetailRoute(viewModel: PostDetailViewModel, onBack: () -> Unit) {
             }
         }
     }
-    PostDetailScreen(state, onBack, viewModel::retry, viewModel::edit,
-        viewModel::changeDescription, viewModel::cancelEdit, viewModel::save, viewModel::delete)
+    PostDetailScreen(
+        state = state,
+        onBack = onBack,
+        onUserClick = onUserClick,
+        onRetry = viewModel::retry,
+        onEdit = viewModel::edit,
+        onDescriptionChange = viewModel::changeDescription,
+        onCancelEdit = viewModel::cancelEdit,
+        onSave = viewModel::save,
+        onDelete = viewModel::delete
+    )
 }

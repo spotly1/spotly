@@ -1,6 +1,5 @@
 package com.example.spotly.ui.profile
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -10,7 +9,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -34,27 +32,7 @@ internal fun ProfileContent(
     onRetryPosts: () -> Unit,
     onPostClick: (String) -> Unit
 ) {
-    var selectedPostId by rememberSaveable(user.uid) {
-        mutableStateOf<String?>(null)
-    }
-
     val gridState = rememberLazyGridState()
-    val selected = selectedPostId
-
-    if (selected != null) {
-        BackHandler {
-            selectedPostId = null
-        }
-
-        ProfilePostsScreen(
-            postsState = postsState,
-            selectedPostId = selected,
-            onBack = { selectedPostId = null },
-            onRetry = onRetryPosts,
-            onPostClick = onPostClick
-        )
-        return
-    }
 
     val posts = (postsState as? ProfilePostsState.Success)?.posts.orEmpty()
 
@@ -63,13 +41,14 @@ internal fun ProfileContent(
         state = gridState,
         horizontalArrangement = Arrangement.spacedBy(3.dp),
         verticalArrangement = Arrangement.spacedBy(3.dp),
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 20.dp)
+        modifier = Modifier.fillMaxSize()
     ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
             Column {
-                ProfileHeader(
+                Box(
+                    modifier = Modifier.padding(horizontal = 10.dp)
+                ) {
+                    ProfileHeader(
                     username = user.username,
                     description = user.description,
                     profileImageUrl = user.profileImageUrl,
@@ -85,9 +64,9 @@ internal fun ProfileContent(
                     onLogoutClick = onLogoutClick,
                     onFollowClick = onFollowClick,
                     isFollowing = isFollowing
-                )
-
-                Spacer(Modifier.height(20.dp))
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
 
                 when (postsState) {
                     ProfilePostsState.Loading -> {
@@ -132,7 +111,7 @@ internal fun ProfileContent(
                     .clickable(
                         onClickLabel = stringResource(R.string.open_post)
                     ) {
-                        selectedPostId = post.id
+                        onPostClick(post.id)
                     },
                 contentScale = ContentScale.Crop
             )
