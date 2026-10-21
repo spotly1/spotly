@@ -31,7 +31,8 @@ internal fun ProfileContent(
     onLogoutClick: () -> Unit = {},
     onFollowClick: () -> Unit = {},
     isFollowing: Boolean = false,
-    onRetryPosts: () -> Unit
+    onRetryPosts: () -> Unit,
+    onPostClick: (String) -> Unit
 ) {
     var selectedPostId by rememberSaveable(user.uid) {
         mutableStateOf<String?>(null)
@@ -49,7 +50,8 @@ internal fun ProfileContent(
             postsState = postsState,
             selectedPostId = selected,
             onBack = { selectedPostId = null },
-            onRetry = onRetryPosts
+            onRetry = onRetryPosts,
+            onPostClick = onPostClick
         )
         return
     }

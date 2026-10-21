@@ -9,7 +9,8 @@ import com.example.spotly.viewmodel.UserProfileViewModel
 @Composable
 fun UserProfileRoute(
     uid: String,
-    viewModel: UserProfileViewModel
+    viewModel: UserProfileViewModel,
+    onPostClick: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -19,6 +20,7 @@ fun UserProfileRoute(
 
     UserProfileScreen(
         uiState = uiState,
-        onRetry = { viewModel.loadProfile(uid) }
+        onRetry = { viewModel.loadProfile(uid) },
+        onPostClick = onPostClick
     )
 }

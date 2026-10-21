@@ -1,6 +1,7 @@
 package com.example.spotly
 
 import android.content.Context
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.spotly.data.repository.*
@@ -15,6 +16,7 @@ class AppContainer(context: Context) {
     private val auth: AuthRepository = FirebaseAuthRepository(services)
     private val profiles: ProfileRepository = FirebaseProfileRepository(services)
     private val posts: PostRepository = FirestorePostRepository(services)
+    private val postDetails: PostDetailRepository = FirestorePostDetailRepository(services)
     private val images: ImageRepository = CloudinaryImageRepository(context, services)
     private val locations: LocationRepository = AndroidLocationRepository(context)
     val addressRepository: AddressRepository = AndroidAddressRepository(context)
@@ -39,6 +41,10 @@ class AppContainer(context: Context) {
         }
     }
     val feedFactory = viewModelFactory { initializer { FeedViewModel(ObserveFeedUseCase(posts)) } }
+    fun postDetailFactory(id: String) = viewModelFactory { initializer {
+        PostDetailViewModel(id, GetPostUseCase(postDetails), UpdatePostUseCase(postDetails, auth),
+            DeletePostUseCase(postDetails, auth), GetCurrentUserIdUseCase(auth), createSavedStateHandle())
+    } }
     // El caso de publicación conserva el borrador: debe ser una instancia por ViewModel, no global.
     val createPostFactory = viewModelFactory { initializer {
         CreatePostViewModel(PublishPostUseCase(posts, images, auth), GetCurrentLocationUseCase(locations))

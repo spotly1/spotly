@@ -4,7 +4,7 @@ import com.example.spotly.domain.repository.AddressRepository
 import com.example.spotly.domain.model.AppResult
 import com.example.spotly.domain.model.AppError
 import com.example.spotly.database.AddressCache
-
+import kotlin.time.Duration.Companion.seconds
 import android.content.Context
 import android.location.Address
 import android.location.Geocoder
@@ -27,7 +27,7 @@ class AndroidAddressRepository(context: Context) : AddressRepository {
         cache.get(key)?.let { return AppResult.Success(it) }
         if (!Geocoder.isPresent()) return AppResult.Error(AppError.AddressUnavailable)
         return try {
-            val address = withTimeoutOrNull(8_000) {
+            val address = withTimeoutOrNull(8.seconds) {
                 val geocoder = Geocoder(context, locale)
                 if (Build.VERSION.SDK_INT >= 33) {
                     suspendCancellableCoroutine { continuation ->

@@ -20,6 +20,12 @@ enum class AppError {
     ImageResponseInvalid,
     ImageUploadFailed,
     PostSaveFailed,
+    PostNotFound,
+    PostLoadFailed,
+    PostUpdateFailed,
+    PostDeleteFailed,
+    PostPermissionDenied,
+    InvalidPostDescription,
     FeedLoadFailed,
     LocationUnavailable,
     AddressUnavailable

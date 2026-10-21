@@ -8,7 +8,8 @@ import com.example.spotly.viewmodel.UserProfileUiState
 @Composable
 fun UserProfileScreen(
     uiState: UserProfileUiState,
-    onRetry: () -> Unit
+    onRetry: () -> Unit,
+    onPostClick: (String) -> Unit
 ) {
     when (uiState) {
         UserProfileUiState.Loading -> {
@@ -27,7 +28,8 @@ fun UserProfileScreen(
                 user = uiState.user,
                 postsState = uiState.postsState,
                 isOwnProfile = false,
-                onRetryPosts = onRetry
+                onRetryPosts = onRetry,
+                onPostClick = onPostClick
             )
         }
     }

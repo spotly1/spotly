@@ -26,6 +26,12 @@ fun AppError.localizedMessage(): String = stringResource(
         AppError.ImageResponseInvalid -> R.string.error_image_response_invalid
         AppError.ImageUploadFailed -> R.string.error_image_upload_failed
         AppError.PostSaveFailed -> R.string.error_post_save
+        AppError.PostNotFound -> R.string.error_post_not_found
+        AppError.PostLoadFailed -> R.string.error_post_load
+        AppError.PostUpdateFailed -> R.string.error_post_update
+        AppError.PostDeleteFailed -> R.string.error_post_delete
+        AppError.PostPermissionDenied -> R.string.error_post_permission
+        AppError.InvalidPostDescription -> R.string.error_post_description
         AppError.FeedLoadFailed -> R.string.error_feed_load
         AppError.LocationUnavailable -> R.string.location_failed
         AppError.AddressUnavailable -> R.string.location_selected

@@ -96,8 +96,7 @@ service cloud.firestore {
           'authorId', 'imageUrl', 'imagePublicId', 'description', 'createdAt', 'location'
         ])
         && request.resource.data.authorId == request.auth.uid
-        && request.resource.data.authorId == request.auth.uid
-        && request.resource.data.username == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.username
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
         && request.resource.data.description is string
         && request.resource.data.description.size() > 0
         && request.resource.data.description.size() <= 1000
@@ -110,7 +109,14 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time
         && (!('location' in request.resource.data) || request.resource.data.location == null
           || request.resource.data.location is latlng);
-      allow update, delete: if false;
+      // Solo el autor puede cambiar la descripción; identidad, imagen, ubicación y fecha son inmutables.
+      allow update: if owns(resource.data.authorId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['description'])
+        && request.resource.data.description is string
+        && request.resource.data.description.size() > 0
+        && request.resource.data.description.size() <= 1000
+        && request.resource.data.description.matches('(?s).*[^\\s].*');
+      allow delete: if owns(resource.data.authorId);
     }
 
     match /{document=**} {

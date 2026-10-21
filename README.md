@@ -13,6 +13,8 @@ Aplicación Android para compartir descubrimientos urbanos mediante fotos, descr
 - Perfil con username, descripción y foto editable.
 - Creación de publicaciones con cámara o galería y ubicación opcional.
 - Feed con las últimas 50 publicaciones.
+- Detalle de publicación desde el feed o la lista del perfil.
+- Edición de la descripción y eliminación con confirmación, solo para el autor.
 - Cuadrícula de publicaciones propias y vista de detalle.
 - Dirección aproximada y mapa integrado de OpenStreetMap.
 - Compresión de fotos y almacenamiento en Cloudinary.
@@ -21,10 +23,12 @@ Aplicación Android para compartir descubrimientos urbanos mediante fotos, descr
 
 Kotlin, Jetpack Compose, Material 3, Navigation Compose con `NavController`, Firebase Authentication, Firestore, Cloudinary y Coil.
 
-El proyecto usa MVVM y está dividido en 10 módulos:
+El proyecto usa MVVM y está dividido en 11 módulos:
 
 - `app`: inicio, navegación e inyección manual con `AppContainer`.
-- `features:auth`, `posts`, `profile` y `search`: pantallas por funcionalidad; búsqueda todavía es una pantalla provisional.
+- `features:feed`: inicio y listado de publicaciones, con su Route, Screen, ViewModel y estado.
+- `features:posts`: creación, detalle, edición de descripción y eliminación de publicaciones.
+- `features:auth`, `profile` y `search`: autenticación, perfiles y búsqueda; búsqueda todavía es una pantalla provisional.
 - `core:domain`: modelos, interfaces de repositorios y casos de uso en Kotlin puro.
 - `core:data`: implementaciones de repositorios y mappers.
 - `core:network`: clientes externos, DTO y preparación de imágenes.
@@ -49,9 +53,10 @@ Las reglas del repositorio están en `firestore.rules`:
 - `users`: perfiles públicos para usuarios autenticados; cada dueño edita su descripción y foto.
 - `privateUsers`: email privado, accesible únicamente por su dueño.
 - `usernames`: reservas de nombres únicos.
-- `posts`: publicaciones consultables por usuarios autenticados; creación validada para su autor. Edición y eliminación todavía bloqueadas.
+- `posts`: publicaciones consultables por usuarios autenticados; creación validada, edición de descripción y eliminación solo por el autor. Foto, ubicación, autor y fecha no se modifican al editar.
 
 La búsqueda/listado de usuarios sigue bloqueada. Cambiar el archivo de reglas local no actualiza Firebase automáticamente.
+Para habilitar la edición y eliminación, el responsable del backend debe publicar el `firestore.rules` actualizado. El borrado quita el documento de Firestore; la imagen permanece en Cloudinary hasta su limpieza manual.
 
 ## Validación
 
@@ -62,7 +67,6 @@ La búsqueda/listado de usuarios sigue bloqueada. Cambiar el archivo de reglas l
 
 ## Pendiente
 
-- Edición y eliminación de publicaciones.
 - Búsqueda de usuarios, likes y seguimiento.
 - Notificaciones.
 - Caché offline con Room.
