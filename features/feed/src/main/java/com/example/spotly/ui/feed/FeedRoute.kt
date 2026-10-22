@@ -9,7 +9,8 @@ import com.example.spotly.viewmodel.FeedViewModel
 fun FeedRoute(
     viewModel: FeedViewModel,
     onUserClick: (String) -> Unit,
-    onPostClick: (String) -> Unit
+    onPostClick: (String) -> Unit,
+    onCreatePostClick: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -17,6 +18,7 @@ fun FeedRoute(
         state = state,
         onRetry = viewModel::retry,
         onUserClick = onUserClick,
-        onPostClick = onPostClick
+        onPostClick = onPostClick,
+        onCreatePostClick = onCreatePostClick
     )
 }

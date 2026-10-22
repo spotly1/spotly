@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
@@ -38,6 +37,8 @@ import com.example.spotly.ui.search.SearchScreen
 import com.example.spotly.viewmodel.AuthViewModel
 import com.example.spotly.viewmodel.ProfileViewModel
 import com.example.spotly.ui.profile.UserProfileRoute
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.unit.dp
 
 private object Route {
     const val Login = "login"
@@ -90,9 +91,6 @@ fun SpotlyNavigation(container: com.example.spotly.AppContainer) {
                     NavigationItem(currentRoute, Route.Search, Icons.Default.Search, R.string.search) {
                         navController.navigateMain(Route.Search)
                     }
-                    NavigationItem(currentRoute, Route.CreatePost, Icons.Default.AddCircle, R.string.create_post) {
-                        navController.navigateMain(Route.CreatePost)
-                    }
                     NavigationItem(currentRoute, Route.Profile, Icons.Default.Person, R.string.profile) {
                         navController.navigateMain(Route.Profile)
                     }
@@ -127,6 +125,11 @@ fun SpotlyNavigation(container: com.example.spotly.AppContainer) {
                         } else {
                             navController.navigate(Route.userProfile(uid))
                         }
+                    },
+                    onCreatePostClick = {
+                        navController.navigate(Route.CreatePost) {
+                            launchSingleTop = true
+                        }
                     }
                 )
             }
@@ -148,12 +151,18 @@ fun SpotlyNavigation(container: com.example.spotly.AppContainer) {
                 )
             }
             composable(Route.CreatePost) {
-                CreatePostRoute(viewModel = viewModel(factory = container.createPostFactory), onPublished = {
-                    navController.navigate(Route.Feed) {
-                        popUpTo(Route.Feed) { inclusive = false }
-                        launchSingleTop = true
+                CreatePostRoute(
+                    viewModel = viewModel(factory = container.createPostFactory),
+                    onBack = {
+                        navController.popBackStack()
+                    },
+                    onPublished = {
+                        navController.navigate(Route.Feed) {
+                            popUpTo(Route.Feed) { inclusive = false }
+                            launchSingleTop = true
+                        }
                     }
-                })
+                )
             }
             composable(Route.Profile) {
                 ProfileRoute(
@@ -193,7 +202,13 @@ private fun RowScope.NavigationItem(
     NavigationBarItem(
         selected = currentRoute == route,
         onClick = onClick,
-        icon = { Icon(icon, contentDescription = stringResource(labelRes)) }
+        icon = {
+            Icon(
+                imageVector = icon,
+                contentDescription = stringResource(labelRes),
+                modifier = Modifier.size(28.dp)
+            )
+        }
     )
 }
 

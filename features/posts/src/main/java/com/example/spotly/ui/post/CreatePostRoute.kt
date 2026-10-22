@@ -18,7 +18,11 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 
 @Composable
-fun CreatePostRoute(viewModel: CreatePostViewModel, onPublished: () -> Unit = {}) {
+fun CreatePostRoute(
+    viewModel: CreatePostViewModel,
+    onBack: () -> Unit,
+    onPublished: () -> Unit = {}
+) {
     var imageUri by rememberSaveable { mutableStateOf<String?>(null) }
     var description by rememberSaveable { mutableStateOf("") }
     val openGallery = rememberGalleryImagePicker { imageUri = it.toString() }
@@ -56,6 +60,7 @@ fun CreatePostRoute(viewModel: CreatePostViewModel, onPublished: () -> Unit = {}
         state = state,
         onLocate = requestLocation,
         onRemoveLocation = viewModel::removeLocation,
-        onPublish = { viewModel.publish(imageUri, description) }
+        onPublish = { viewModel.publish(imageUri, description) },
+        onBack = onBack
     )
 }
