@@ -12,6 +12,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.spotly.ui.components.UserAvatar
+import androidx.compose.ui.res.stringResource
+import com.example.spotly.core.ui.R
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.semantics.Role
 
 @Composable
 fun ProfileHeader(
@@ -25,7 +29,11 @@ fun ProfileHeader(
     onEditProfileClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
     onFollowClick: () -> Unit = {},
-    isFollowing: Boolean = false
+    isFollowing: Boolean = false,
+    followEnabled: Boolean = true,
+    followBusy: Boolean = false,
+    onFollowersClick: (() -> Unit)? = null,
+    onFollowingClick: (() -> Unit)? = null
 ) {
     Column {
         Spacer(Modifier.height(24.dp))
@@ -62,9 +70,9 @@ fun ProfileHeader(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            ProfileStat(postsCount, "Publicaciones")
-            ProfileStat(followersCount, "Seguidores")
-            ProfileStat(followingCount, "Seguidos")
+            ProfileStat(postsCount, stringResource(R.string.posts))
+            ProfileStat(followersCount, stringResource(R.string.followers), onFollowersClick)
+            ProfileStat(followingCount, stringResource(R.string.following), onFollowingClick)
         }
 
         Spacer(Modifier.height(24.dp))
@@ -74,7 +82,7 @@ fun ProfileHeader(
                 onClick = onEditProfileClick,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Editar perfil")
+                Text(stringResource(R.string.edit_profile))
             }
 
             Spacer(Modifier.height(12.dp))
@@ -83,22 +91,29 @@ fun ProfileHeader(
                 onClick = onLogoutClick,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Cerrar sesión")
+                Text(stringResource(R.string.logout))
             }
         } else {
             Button(
                 onClick = onFollowClick,
+                enabled = followEnabled,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(if (isFollowing) "Dejar de seguir" else "Seguir")
+                Text(stringResource(when {
+                    followBusy -> R.string.follow_saving
+                    isFollowing -> R.string.unfollow
+                    else -> R.string.follow
+                }))
             }
         }
     }
 }
 
 @Composable
-private fun ProfileStat(value: String, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+private fun ProfileStat(value: String, label: String, onClick: (() -> Unit)? = null) {
+    val modifier = if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier
+    Column(modifier.heightIn(min = 48.dp).padding(horizontal = 8.dp), horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center) {
         Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Text(label, style = MaterialTheme.typography.bodyMedium)
     }

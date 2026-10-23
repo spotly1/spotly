@@ -12,6 +12,9 @@ sealed interface UserProfileUiState {
 
     data class Success(
         val user: User,
-        val postsState: ProfilePostsState = ProfilePostsState.Loading
+        val postsState: ProfilePostsState = ProfilePostsState.Loading,
+        val followState: ProfileFollowState = ProfileFollowState(),
+        val followBusy: Boolean = false,
+        val followError: AppError? = null
     ) : UserProfileUiState
 }

@@ -2,6 +2,7 @@ package com.example.spotly.viewmodel
 
 import com.example.spotly.domain.model.AppError
 import com.example.spotly.domain.model.Post
+import com.example.spotly.ui.state.LikeUiState
 
 sealed interface PostDetailUiState {
     data object Loading : PostDetailUiState
@@ -14,7 +15,8 @@ sealed interface PostDetailUiState {
         val description: String = post.description,
         val action: PostAction = PostAction.None,
         val error: AppError? = null,
-        val saved: Boolean = false
+        val saved: Boolean = false,
+        val likes: LikeUiState = LikeUiState()
     ) : PostDetailUiState
 }
 

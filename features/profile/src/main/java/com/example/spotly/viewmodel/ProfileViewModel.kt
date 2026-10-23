@@ -12,7 +12,8 @@ import kotlinx.coroutines.flow.*
 class ProfileViewModel(
     private val getCurrentProfile: GetCurrentProfileUseCase,
     private val updateProfileUseCase: UpdateProfileUseCase,
-    private val observeUserPosts: ObserveUserPostsUseCase
+    private val observeUserPosts: ObserveUserPostsUseCase,
+    observeFollows: ObserveFollowProfileUseCase
 ) : ViewModel() {
     private val profile = MutableStateFlow<ProfileUiState>(ProfileUiState.Loading)
 
@@ -28,10 +29,13 @@ class ProfileViewModel(
         }.onStart { emit(UserPosts(uid, ProfilePostsState.Loading)) }
     }
 
-    val uiState: StateFlow<ProfileUiState> = combine(profile, posts) { current, userPosts ->
+    private val follows = profile.map { it.user?.uid }.followState(observeFollows)
+
+    val uiState: StateFlow<ProfileUiState> = combine(profile, posts, follows) { current, userPosts, following ->
         when (current) {
             is ProfileUiState.Success -> current.copy(
-                postsState = if (userPosts.uid == current.user.uid) userPosts.state else ProfilePostsState.Loading
+                postsState = if (userPosts.uid == current.user.uid) userPosts.state else ProfilePostsState.Loading,
+                followState = if (following.uid == current.user.uid) following else ProfileFollowState()
             )
             ProfileUiState.Loading, is ProfileUiState.Error -> current
         }

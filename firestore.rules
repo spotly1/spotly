@@ -10,6 +10,13 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == userId;
     }
 
+    function notificationAfter(id, recipient, kind, postId) {
+      let notice = getAfter(/databases/$(database)/documents/notifications/$(id)).data;
+      return notice.actorId == request.auth.uid && notice.recipientId == recipient
+        && notice.type == kind && notice.postId == postId
+        && notice.createdAt == request.time && notice.read == false;
+    }
+
     function validUser() {
       return request.resource.data.keys().hasOnly([
           'username',
@@ -42,8 +49,8 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow get: if signedIn();
-      // Habilitar consultas al implementar búsqueda, con un esquema público verificable.
-      allow list: if false;
+      // Consultas acotadas de perfiles públicos; privateUsers sigue sin permitir listados.
+      allow list: if signedIn() && request.query.limit > 0 && request.query.limit <= 20;
       allow create: if owns(userId) && validUser()
         && request.resource.data.description == ''
         && request.resource.data.profileImageUrl == ''
@@ -87,7 +94,88 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Relaciones públicas entre cuentas; solo el seguidor puede crearlas o quitarlas.
+    match /follows/{followId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['followerId', 'followedId', 'createdAt'])
+        && request.resource.data.followerId == request.auth.uid
+        && request.resource.data.followedId is string
+        && request.resource.data.followedId != request.auth.uid
+        && followId == request.auth.uid + '_' + request.resource.data.followedId
+        && request.resource.data.createdAt == request.time
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && exists(/databases/$(database)/documents/users/$(request.resource.data.followedId))
+        && notificationAfter('follow_' + followId, request.resource.data.followedId, 'follow', '');
+      allow update: if false;
+      allow delete: if owns(resource.data.followerId)
+        && !existsAfter(/databases/$(database)/documents/notifications/$('follow_' + followId));
+    }
+
+    match /notifications/{noticeId} {
+      function validNotice() {
+        let data = request.resource.data;
+        return data.keys().hasOnly(['recipientId', 'actorId', 'type', 'postId', 'createdAt', 'read'])
+          && data.actorId == request.auth.uid && data.recipientId is string
+          && data.recipientId != request.auth.uid && data.postId is string
+          && data.createdAt == request.time && data.read == false
+          && exists(/databases/$(database)/documents/users/$(data.actorId))
+          && exists(/databases/$(database)/documents/users/$(data.recipientId));
+      }
+      function newFollow() {
+        let data = request.resource.data;
+        let relation = /databases/$(database)/documents/follows/$(data.actorId + '_' + data.recipientId);
+        return data.type == 'follow' && data.postId == ''
+          && noticeId == 'follow_' + data.actorId + '_' + data.recipientId
+          && !exists(relation)
+          && getAfter(relation).data.followerId == data.actorId
+          && getAfter(relation).data.followedId == data.recipientId
+          && getAfter(relation).data.createdAt == request.time;
+      }
+      function newLike() {
+        let data = request.resource.data;
+        let like = /databases/$(database)/documents/posts/$(data.postId)/likes/$(data.actorId);
+        return data.type == 'like' && data.postId != ''
+          && noticeId == 'like_' + data.postId + '_' + data.actorId
+          && get(/databases/$(database)/documents/posts/$(data.postId)).data.authorId == data.recipientId
+          && !exists(like) && getAfter(like).data.createdAt == request.time;
+      }
+      function actionRemoved() {
+        let data = resource.data;
+        return (data.type == 'follow'
+            && !existsAfter(/databases/$(database)/documents/follows/$(data.actorId + '_' + data.recipientId)))
+          || (data.type == 'like'
+            && !existsAfter(/databases/$(database)/documents/posts/$(data.postId)/likes/$(data.actorId)));
+      }
+      allow get: if owns(resource.data.recipientId);
+      allow list: if owns(resource.data.recipientId) && request.query.limit > 0 && request.query.limit <= 50;
+      // No se puede inventar un aviso ni repetirlo si la acción ya existía.
+      allow create: if signedIn() && validNotice() && (newFollow() || newLike());
+      allow update: if owns(resource.data.recipientId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read'])
+        && request.resource.data.read == true;
+      // Permite retirar avisos antiguos al deshacer la acción, también si nunca hubo aviso.
+      allow delete: if signedIn() && (resource == null || (owns(resource.data.actorId) && actionRemoved()));
+    }
+
     match /posts/{postId} {
+      match /likes/{userId} {
+        allow read: if signedIn()
+          && exists(/databases/$(database)/documents/posts/$(postId));
+        allow create: if owns(userId)
+          && exists(/databases/$(database)/documents/posts/$(postId))
+          && request.resource.data.keys().hasOnly(['createdAt'])
+          && request.resource.data.createdAt == request.time
+          && (get(/databases/$(database)/documents/posts/$(postId)).data.authorId == userId
+            || notificationAfter('like_' + postId + '_' + userId,
+              get(/databases/$(database)/documents/posts/$(postId)).data.authorId, 'like', postId));
+        allow update: if false;
+        allow delete: if owns(userId)
+          && (!exists(/databases/$(database)/documents/posts/$(postId))
+            || get(/databases/$(database)/documents/posts/$(postId)).data.authorId == userId
+            || !existsAfter(/databases/$(database)/documents/notifications/$('like_' + postId + '_' + userId)));
+      }
+
       allow get: if signedIn();
       allow list: if signedIn() && (resource.data.authorId == request.auth.uid
         || request.query.limit <= 50);

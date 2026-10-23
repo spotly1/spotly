@@ -31,8 +31,8 @@ fun EditProfileRoute(viewModel: ProfileViewModel, onSaved: () -> Unit) {
     }
 
     when (val current = state) {
-        ProfileUiState.Loading, is ProfileUiState.Error ->
-            ProfileScreen(current, {}, {}, viewModel::loadCurrentUserProfile, {})
+        ProfileUiState.Loading -> LoadingProfile()
+        is ProfileUiState.Error -> ProfileError(current.error.localizedMessage(), viewModel::loadCurrentUserProfile)
         is ProfileUiState.Success -> EditProfileScreen(
             user = current.user,
             isLoading = current.saveState is ProfileSaveState.Saving,

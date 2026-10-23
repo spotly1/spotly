@@ -14,10 +14,10 @@ class FirestorePostDetailRepository(services: FirebaseServices) : PostDetailRepo
     private val db = services.firestore
 
     override suspend fun get(id: String): AppResult<Post> = safely(AppError.PostLoadFailed) {
-        val document = db.collection("posts").document(id).get().await()
+        val document = db.collection("posts").document(id).get(com.google.firebase.firestore.Source.SERVER).await()
         val post = document.toObject(PostDto::class.java)?.toDomain(document.id)
             ?: return@safely AppResult.Error(AppError.PostNotFound)
-        val author = db.collection("users").document(post.authorId).get().await()
+        val author = db.collection("users").document(post.authorId).get(com.google.firebase.firestore.Source.SERVER).await()
         AppResult.Success(post.copy(
             username = author.getString("username").orEmpty(),
             profileImageUrl = author.getString("profileImageUrl").orEmpty()

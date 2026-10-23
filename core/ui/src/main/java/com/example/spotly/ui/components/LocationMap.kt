@@ -26,6 +26,10 @@ fun LocationMap(
     point: LocationPoint,
     modifier: Modifier = Modifier
 ) {
+    if (!LocalOnline.current) {
+        Box(modifier, contentAlignment = Alignment.Center) { Text(stringResource(R.string.offline_map)) }
+        return
+    }
     val context = LocalContext.current
     val loadingText = stringResource(R.string.map_loading)
     val failedText = stringResource(R.string.map_failed)

@@ -23,7 +23,8 @@ sealed interface ProfileUiState {
     data class Success(
         override val user: User,
         val postsState: ProfilePostsState = ProfilePostsState.Loading,
-        val saveState: ProfileSaveState = ProfileSaveState.Idle
+        val saveState: ProfileSaveState = ProfileSaveState.Idle,
+        val followState: ProfileFollowState = ProfileFollowState()
     ) : ProfileUiState {
         override val error: AppError? get() = (saveState as? ProfileSaveState.Error)?.error
     }
