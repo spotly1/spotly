@@ -9,6 +9,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.CachePolicy
+import androidx.compose.ui.platform.LocalContext
 import com.example.spotly.core.ui.R
 
 internal fun optimizedPostImageUrl(url: String, maxPixels: Int): String {
@@ -26,14 +29,22 @@ fun PostImage(
     contentScale: ContentScale = ContentScale.Fit,
     maxPixels: Int = 1080
 ) {
-    val url = remember(model, maxPixels) { optimizedPostImageUrl(model, maxPixels) }
+    val online = LocalOnline.current
+    // El detalle offline reutiliza la variante de 1080 px que ya cargó el feed.
+    val pixels = if (!online && maxPixels > 1080) 1080 else maxPixels
+    val url = remember(model, pixels) { optimizedPostImageUrl(model, pixels) }
+    val context = LocalContext.current
+    val request = remember(context, url, online) {
+        ImageRequest.Builder(context).data(url)
+            .networkCachePolicy(if (online) CachePolicy.ENABLED else CachePolicy.DISABLED).build()
+    }
     var attempt by remember(url) { mutableIntStateOf(0) }
     var loading by remember(url, attempt) { mutableStateOf(true) }
     var failed by remember(url, attempt) { mutableStateOf(false) }
     Box(modifier, contentAlignment = Alignment.Center) {
-        key(url, attempt) {
+        key(url, attempt, online) {
             AsyncImage(
-                model = url, contentDescription = contentDescription,
+                model = request, contentDescription = contentDescription,
                 modifier = Modifier
                     .fillMaxWidth()
                     .wrapContentHeight(),
@@ -44,6 +55,9 @@ fun PostImage(
             )
         }
         if (loading) CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
-        if (failed) TextButton(onClick = { attempt++ }) { Text(stringResource(R.string.retry)) }
+        if (failed) {
+            if (online) TextButton(onClick = { attempt++ }) { Text(stringResource(R.string.retry)) }
+            else Text(stringResource(R.string.offline_image_missing), Modifier.padding(16.dp))
+        }
     }
 }

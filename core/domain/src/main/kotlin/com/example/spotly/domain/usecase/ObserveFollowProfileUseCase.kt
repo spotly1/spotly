@@ -1,0 +1,7 @@
+package com.example.spotly.domain.usecase
+
+import com.example.spotly.domain.repository.FollowRepository
+
+class ObserveFollowProfileUseCase(private val repository: FollowRepository) {
+    operator fun invoke(uid: String) = repository.observeProfile(uid)
+}

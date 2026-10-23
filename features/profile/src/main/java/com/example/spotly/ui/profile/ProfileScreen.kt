@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import com.example.spotly.viewmodel.ProfileUiState
+import com.example.spotly.domain.model.FollowListType
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,7 +25,8 @@ fun ProfileScreen(
     onEditProfileClick: () -> Unit,
     onLogoutClick: () -> Unit,
     onRetryPosts: () -> Unit,
-    onPostClick: (String) -> Unit
+    onPostClick: (String) -> Unit,
+    onFollowListClick: (String, FollowListType) -> Unit
 ) {
     when (uiState) {
         ProfileUiState.Loading -> LoadingProfile()
@@ -37,10 +39,12 @@ fun ProfileScreen(
                 user = uiState.user,
                 postsState = uiState.postsState,
                 isOwnProfile = true,
+                followState = uiState.followState,
                 onEditProfileClick = onEditProfileClick,
                 onLogoutClick = onLogoutClick,
                 onRetryPosts = onRetryPosts,
-                onPostClick = onPostClick
+                onPostClick = onPostClick,
+                onFollowListClick = onFollowListClick
             )
         }
     }

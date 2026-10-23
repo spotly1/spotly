@@ -11,6 +11,6 @@ interface PostRepository {
         id: String, uid: String, image: UploadedImage, description: String,
         location: LocationPoint? = null, onResult: (AppResult<Unit>) -> Unit
     )
-    fun observeFeed(): Flow<AppResult<List<Post>>>
+    fun observeFeed(authorIds: Set<String>): Flow<AppResult<List<Post>>>
     fun observeUserPosts(uid: String): Flow<AppResult<List<Post>>>
 }

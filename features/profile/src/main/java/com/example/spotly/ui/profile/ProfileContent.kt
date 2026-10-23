@@ -16,9 +16,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.spotly.domain.model.User
+import com.example.spotly.domain.model.FollowListType
 import com.example.spotly.ui.components.PostImage
 import com.example.spotly.viewmodel.ProfilePostsState
 import com.example.spotly.core.ui.R
+import com.example.spotly.domain.model.AppError
+import com.example.spotly.ui.components.localizedMessage
+import com.example.spotly.viewmodel.ProfileFollowState
 
 @Composable
 internal fun ProfileContent(
@@ -28,9 +32,12 @@ internal fun ProfileContent(
     onEditProfileClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
     onFollowClick: () -> Unit = {},
-    isFollowing: Boolean = false,
+    followState: ProfileFollowState = ProfileFollowState(),
+    followBusy: Boolean = false,
+    followError: AppError? = null,
     onRetryPosts: () -> Unit,
-    onPostClick: (String) -> Unit
+    onPostClick: (String) -> Unit,
+    onFollowListClick: (String, FollowListType) -> Unit
 ) {
     val gridState = rememberLazyGridState()
 
@@ -57,16 +64,27 @@ internal fun ProfileContent(
                     } else {
                         stringResource(R.string.count_unavailable)
                     },
-                    followersCount = stringResource(R.string.zero_count),
-                    followingCount = stringResource(R.string.zero_count),
+                    followersCount = followState.summary?.followers?.toString() ?: stringResource(R.string.count_unavailable),
+                    followingCount = followState.summary?.following?.toString() ?: stringResource(R.string.count_unavailable),
                     isOwnProfile = isOwnProfile,
                     onEditProfileClick = onEditProfileClick,
                     onLogoutClick = onLogoutClick,
                     onFollowClick = onFollowClick,
-                    isFollowing = isFollowing
+                    isFollowing = followState.summary?.isFollowing == true,
+                    followEnabled = followState.summary != null && !followBusy,
+                    followBusy = followBusy,
+                    onFollowersClick = { onFollowListClick(user.uid, FollowListType.Followers) },
+                    onFollowingClick = { onFollowListClick(user.uid, FollowListType.Following) }
                     )
                 }
                 Spacer(modifier = Modifier.height(8.dp))
+                (followError ?: followState.error)?.let { error ->
+                    Text(error.localizedMessage(), Modifier.padding(horizontal = 12.dp),
+                        color = MaterialTheme.colorScheme.error)
+                    if (followState.error != null) {
+                        OutlinedButton(onClick = onRetryPosts) { Text(stringResource(R.string.retry)) }
+                    }
+                }
 
                 when (postsState) {
                     ProfilePostsState.Loading -> {

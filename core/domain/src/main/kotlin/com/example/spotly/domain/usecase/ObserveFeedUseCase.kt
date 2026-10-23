@@ -1,7 +1,6 @@
 package com.example.spotly.domain.usecase
+import com.example.spotly.domain.repository.FeedRepository
 
-import com.example.spotly.domain.repository.PostRepository
-
-class ObserveFeedUseCase(private val repository: PostRepository) {
-    operator fun invoke() = repository.observeFeed()
+class ObserveFeedUseCase(private val repository: FeedRepository) {
+    operator fun invoke() = repository.observe()
 }

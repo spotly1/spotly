@@ -5,25 +5,51 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.spotly.domain.model.AppResult
 import com.example.spotly.domain.usecase.*
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import com.example.spotly.ui.state.PostLikesController
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class PostDetailViewModel(
     private val postId: String,
     private val getPost: GetPostUseCase,
     private val updatePost: UpdatePostUseCase,
     private val deletePost: DeletePostUseCase,
     private val currentUserId: GetCurrentUserIdUseCase,
-    private val savedState: SavedStateHandle
+    private val savedState: SavedStateHandle,
+    observeLikes: ObservePostLikesUseCase,
+    setLike: SetPostLikeUseCase
 ) : ViewModel() {
     private val state = MutableStateFlow<PostDetailUiState>(PostDetailUiState.Loading)
-    val uiState = state.asStateFlow()
+    private val likes = PostLikesController(viewModelScope, observeLikes, setLike)
+    private val postLikes = state.map { it is PostDetailUiState.Content }.distinctUntilChanged().flatMapLatest { visible ->
+        likes.observe(if (visible) listOf(postId) else emptyList())
+    }
+    val uiState = combine(state, postLikes) { current, summaries ->
+        if (current is PostDetailUiState.Content) current.copy(likes = summaries[postId] ?: com.example.spotly.ui.state.LikeUiState())
+        else current
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000, 0), PostDetailUiState.Loading)
+
+    fun toggleLike() {
+        val content = uiState.value as? PostDetailUiState.Content ?: return
+        val summary = content.likes.summary ?: return
+        if (content.likes.busy || content.action != PostAction.None) return
+        likes.set(postId, !summary.likedByMe)
+    }
+
+    fun retryLikes() = likes.retry(postId)
 
     init { load() }
 
     fun retry() {
         if (state.value is PostDetailUiState.Error) load()
+    }
+
+    fun refreshAfterReconnect() {
+        val content = state.value as? PostDetailUiState.Content
+        if (state.value is PostDetailUiState.Error ||
+            (content != null && !content.isEditing && content.action == PostAction.None)) load()
     }
 
     private fun load() {

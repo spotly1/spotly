@@ -40,10 +40,12 @@ android {
 dependencies {
     implementation(project(":core:domain"))
     implementation(project(":core:data"))
+    implementation(project(":core:database"))
     implementation(project(":core:network"))
     implementation(project(":core:ui"))
     implementation(project(":features:auth"))
     implementation(project(":features:feed"))
+    implementation(project(":features:notifications"))
     implementation(project(":features:posts"))
     implementation(project(":features:profile"))
     implementation(project(":features:search"))

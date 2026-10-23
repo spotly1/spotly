@@ -12,9 +12,14 @@ import com.example.spotly.viewmodel.PostDetailViewModel
 fun PostDetailRoute(
     viewModel: PostDetailViewModel,
     onBack: () -> Unit,
-    onUserClick: (String) -> Unit
+    onUserClick: (String) -> Unit,
+    onLikesClick: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val online = com.example.spotly.ui.components.LocalOnline.current
+    LaunchedEffect(viewModel, online) {
+        if (online) viewModel.refreshAfterReconnect()
+    }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val currentOnBack by rememberUpdatedState(onBack)
     LaunchedEffect(viewModel, lifecycle) {
@@ -33,6 +38,9 @@ fun PostDetailRoute(
         onDescriptionChange = viewModel::changeDescription,
         onCancelEdit = viewModel::cancelEdit,
         onSave = viewModel::save,
-        onDelete = viewModel::delete
+        onDelete = viewModel::delete,
+        onLike = viewModel::toggleLike,
+        onRetryLikes = viewModel::retryLikes,
+        onLikesClick = onLikesClick
     )
 }

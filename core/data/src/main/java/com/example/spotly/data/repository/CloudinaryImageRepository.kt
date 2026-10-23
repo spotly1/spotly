@@ -14,7 +14,8 @@ import com.cloudinary.android.callback.ErrorInfo
 import com.cloudinary.android.callback.UploadCallback
 import com.example.spotly.network.ImageUploadDto
 
-class CloudinaryImageRepository(context: Context, private val services: com.example.spotly.network.FirebaseServices) : ImageRepository {
+class CloudinaryImageRepository(context: Context, private val services: com.example.spotly.network.FirebaseServices,
+    private val connection: com.example.spotly.domain.repository.ConnectionRepository) : ImageRepository {
     private val appContext = context.applicationContext
 
     override fun uploadImage(
@@ -22,6 +23,10 @@ class CloudinaryImageRepository(context: Context, private val services: com.exam
         forPost: Boolean,
         onResult: (AppResult<UploadedImage>) -> Unit
     ) {
+        if (!connection.isOnline()) {
+            onResult(AppResult.Error(AppError.Offline))
+            return
+        }
         val uid = services.auth.currentUser?.uid
         if (uid == null) {
             onResult(AppResult.Error(AppError.Unauthenticated))

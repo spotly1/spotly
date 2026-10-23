@@ -39,6 +39,7 @@ fun LocationMapButton(point: LocationPoint) {
 
 @Composable
 fun LocationAddressButton(point: LocationPoint, address: String?) {
+    val online = LocalOnline.current
     var show by remember(point) { mutableStateOf(false) }
     val label = address ?: stringResource(R.string.location_selected)
     val action = stringResource(R.string.location_map)
@@ -46,7 +47,7 @@ fun LocationAddressButton(point: LocationPoint, address: String?) {
     Text(
         text = label,
         modifier = Modifier
-            .clickable(onClickLabel = action) { show = true },
+            .clickable(enabled = online, onClickLabel = action) { show = true },
         style = MaterialTheme.typography.bodySmall,
         color = if (isSystemInDarkTheme()) Color(0xFF90CAF9) else Color(0xFF1565C0),
         textAlign = TextAlign.Start,
@@ -54,7 +55,7 @@ fun LocationAddressButton(point: LocationPoint, address: String?) {
         overflow = TextOverflow.Ellipsis
     )
 
-    if (show) LocationMapDialog(point) { show = false }
+    if (show && LocalOnline.current) LocationMapDialog(point) { show = false }
 }
 
 @SuppressLint("SetJavaScriptEnabled") // HTML propio y Leaflet fijado con SRI; sin puente a código Android.

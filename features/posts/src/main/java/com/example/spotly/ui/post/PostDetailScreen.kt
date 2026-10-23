@@ -44,8 +44,12 @@ fun PostDetailScreen(
     onSave: () -> Unit,
     onDelete: () -> Unit,
     onUserClick: (String) -> Unit,
+    onLike: () -> Unit,
+    onRetryLikes: () -> Unit,
+    onLikesClick: () -> Unit,
 ) {
     val content = state as? PostDetailUiState.Content
+    val online = com.example.spotly.ui.components.LocalOnline.current
     val busy = content?.action?.let { it != PostAction.None } == true
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
     var menuExpanded by remember { mutableStateOf(false) }
@@ -114,7 +118,7 @@ fun PostDetailScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
-                    if (state.isOwner && !state.isEditing) {
+                    if (state.isOwner && !state.isEditing && online) {
                         Box {
                             IconButton(onClick = { menuExpanded = true }, enabled = !busy) {
                                 Icon(Icons.Default.MoreVert, stringResource(R.string.post_options))
@@ -139,6 +143,11 @@ fun PostDetailScreen(
                     modifier = Modifier.fillMaxWidth(),
                     contentScale = ContentScale.FillWidth
                 )
+
+                Box(Modifier.padding(horizontal = 8.dp)) {
+                    PostLikeButton(state.likes, onClick = onLike, onRetry = onRetryLikes,
+                        onCountClick = onLikesClick, enabled = !busy)
+                }
 
                 if (state.isEditing) {
                     Text(stringResource(R.string.post_edit_notice), style = MaterialTheme.typography.bodySmall,
@@ -181,7 +190,7 @@ fun PostDetailScreen(
                 }
                 if (state.isOwner) {
                     if (state.isEditing) {
-                        Button(onClick = onSave, enabled = !busy && state.description.isNotBlank(),
+                        Button(onClick = onSave, enabled = online && !busy && state.description.isNotBlank(),
                             modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp), shape = RoundedCornerShape(16.dp)) {
                             Text(stringResource(if (state.action == PostAction.Saving) R.string.saving else R.string.save_changes))
                         }
@@ -194,7 +203,7 @@ fun PostDetailScreen(
             }
         }
     }
-    if (confirmDelete && content?.isOwner == true && !busy) {
+    if (confirmDelete && content?.isOwner == true && !busy && online) {
         AlertDialog(onDismissRequest = { confirmDelete = false },
             title = { Text(stringResource(R.string.post_delete)) },
             text = { Text(stringResource(R.string.post_delete_confirm)) },

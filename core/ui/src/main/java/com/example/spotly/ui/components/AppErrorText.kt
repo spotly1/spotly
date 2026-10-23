@@ -8,6 +8,9 @@ import com.example.spotly.domain.model.AppError
 @Composable
 fun AppError.localizedMessage(): String = stringResource(
     when (this) {
+        AppError.Offline -> R.string.error_offline
+        AppError.OfflineCacheEmpty -> R.string.offline_cache_empty
+        AppError.CacheFailed -> R.string.cache_failed
         AppError.RequiredFields -> R.string.error_required_fields
         AppError.InvalidEmail -> R.string.error_invalid_email
         AppError.UsernameTooShort -> R.string.error_username_too_short
@@ -22,6 +25,13 @@ fun AppError.localizedMessage(): String = stringResource(
         AppError.Unauthenticated -> R.string.error_unauthenticated
         AppError.ProfileNotFound -> R.string.error_profile_not_found
         AppError.ProfileLoadFailed -> R.string.profile_load_error
+        AppError.UserSearchFailed -> R.string.search_failed
+        AppError.FollowLoadFailed -> R.string.follow_load_failed
+        AppError.FollowUpdateFailed -> R.string.follow_update_failed
+        AppError.LikesLoadFailed -> R.string.likes_load_failed
+        AppError.LikeUpdateFailed -> R.string.like_update_failed
+        AppError.NotificationsLoadFailed -> R.string.notifications_load_failed
+        AppError.NotificationReadFailed -> R.string.notification_read_failed
         AppError.ProfileUpdateFailed -> R.string.error_profile_update_failed
         AppError.ImageResponseInvalid -> R.string.error_image_response_invalid
         AppError.ImageUploadFailed -> R.string.error_image_upload_failed
@@ -33,6 +43,7 @@ fun AppError.localizedMessage(): String = stringResource(
         AppError.PostPermissionDenied -> R.string.error_post_permission
         AppError.InvalidPostDescription -> R.string.error_post_description
         AppError.FeedLoadFailed -> R.string.error_feed_load
+        AppError.ExploreLoadFailed -> R.string.explore_error
         AppError.LocationUnavailable -> R.string.location_failed
         AppError.AddressUnavailable -> R.string.location_selected
     }

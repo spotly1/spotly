@@ -2,6 +2,9 @@ package com.example.spotly.domain.model
 
 // Los repositorios y ViewModels comunican errores; la UI resuelve el texto traducible.
 enum class AppError {
+    Offline,
+    OfflineCacheEmpty,
+    CacheFailed,
     RequiredFields,
     InvalidEmail,
     UsernameTooShort,
@@ -16,6 +19,13 @@ enum class AppError {
     Unauthenticated,
     ProfileNotFound,
     ProfileLoadFailed,
+    UserSearchFailed,
+    FollowLoadFailed,
+    FollowUpdateFailed,
+    LikesLoadFailed,
+    LikeUpdateFailed,
+    NotificationsLoadFailed,
+    NotificationReadFailed,
     ProfileUpdateFailed,
     ImageResponseInvalid,
     ImageUploadFailed,
@@ -27,6 +37,7 @@ enum class AppError {
     PostPermissionDenied,
     InvalidPostDescription,
     FeedLoadFailed,
+    ExploreLoadFailed,
     LocationUnavailable,
     AddressUnavailable
 }

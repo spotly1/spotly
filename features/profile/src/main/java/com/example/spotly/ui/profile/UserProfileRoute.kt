@@ -5,12 +5,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import com.example.spotly.viewmodel.UserProfileViewModel
+import com.example.spotly.domain.model.FollowListType
 
 @Composable
 fun UserProfileRoute(
     uid: String,
     viewModel: UserProfileViewModel,
-    onPostClick: (String) -> Unit
+    onPostClick: (String) -> Unit,
+    onFollowListClick: (String, FollowListType) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -21,6 +23,8 @@ fun UserProfileRoute(
     UserProfileScreen(
         uiState = uiState,
         onRetry = { viewModel.loadProfile(uid) },
-        onPostClick = onPostClick
+        onPostClick = onPostClick,
+        onFollowClick = viewModel::toggleFollow,
+        onFollowListClick = onFollowListClick
     )
 }
