@@ -19,6 +19,7 @@
             <option value="$PROJECT_DIR$/features" />
             <option value="$PROJECT_DIR$/features/auth" />
             <option value="$PROJECT_DIR$/features/feed" />
+            <option value="$PROJECT_DIR$/features/notifications" />
             <option value="$PROJECT_DIR$/features/posts" />
             <option value="$PROJECT_DIR$/features/profile" />
             <option value="$PROJECT_DIR$/features/search" />

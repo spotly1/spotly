@@ -131,9 +131,9 @@
     <string name="notifications_none_unread">No tenés notificaciones sin leer.</string>
     <string name="notifications_load_failed">No se pudieron cargar las notificaciones. Revisá tu conexión e intentá nuevamente.</string>
     <string name="notification_read_failed">No se pudo abrir el aviso. Puede que ya no esté disponible; intentá nuevamente.</string>
-    <string name="notification_unknown_user">Un usuario</string>
+    <string name="notification_unknown_user">un usuario</string>
     <string name="notification_follow">%1$s comenzó a seguirte.</string>
-    <string name="notification_like">%1$s le dio Me gusta a tu publicación.</string>
+    <string name="notification_like">%1$s le dio me gusta a tu publicación.</string>
     <string name="notifications_limit">Mostramos los últimos 50 avisos. Usá Sin leer para encontrar pendientes anteriores.</string>
     <string name="offline_banner">Sin conexión. Mostrando contenido guardado cuando esté disponible.</string>
     <string name="error_offline">Esta acción requiere conexión a Internet.</string>

@@ -13,11 +13,29 @@ internal fun NotificationDto.toDomain(id: String, actor: UserDto): AppNotificati
         "like" -> NotificationType.Like
         else -> return null
     }
-    return AppNotification(id, actorId, actor.username, actor.profileImageUrl, kind, postId,
-        createdAt?.let { Instant.ofEpochSecond(it.seconds, it.nanoseconds.toLong()) }, read)
+    return AppNotification(
+        id, actorId, actor.username, actor.profileImageUrl,
+        kind, postId,
+        createdAt?.let {
+            Instant.ofEpochSecond(it.seconds, it.nanoseconds.toLong())
+        },
+        read,
+        postImageUrl
+    )
 }
 
-internal fun notificationData(actorId: String, recipientId: String, type: String, postId: String = "") = mapOf(
-    "actorId" to actorId, "recipientId" to recipientId, "type" to type, "postId" to postId,
-    "createdAt" to FieldValue.serverTimestamp(), "read" to false
+internal fun notificationData(
+    actorId: String,
+    recipientId: String,
+    type: String,
+    postId: String = "",
+    postImageUrl: String = ""
+) = mapOf(
+    "actorId" to actorId,
+    "recipientId" to recipientId,
+    "type" to type,
+    "postId" to postId,
+    "postImageUrl" to postImageUrl,
+    "createdAt" to FieldValue.serverTimestamp(),
+    "read" to false
 )

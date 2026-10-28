@@ -1,3 +1,4 @@
+
 package com.example.spotly.ui.notifications
 
 import androidx.compose.foundation.clickable
@@ -13,63 +14,256 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.example.spotly.core.ui.R
 import com.example.spotly.domain.model.NotificationType
+import com.example.spotly.ui.components.PostThumbnail
 import com.example.spotly.ui.components.UserAvatar
 import com.example.spotly.ui.components.localizedMessage
 import com.example.spotly.viewmodel.NotificationsContent
 import com.example.spotly.viewmodel.NotificationsUiState
+import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
+import java.util.Locale
+import java.time.Duration
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NotificationsScreen(state: NotificationsUiState, onBack: () -> Unit, onRetry: () -> Unit,
-    onFilter: (Boolean) -> Unit, onOpen: (String) -> Unit, onSettings: () -> Unit) {
+fun NotificationsScreen(
+    state: NotificationsUiState,
+    onBack: () -> Unit,
+    onRetry: () -> Unit,
+    onFilter: (Boolean) -> Unit,
+    onOpen: (String) -> Unit,
+    onSettings: () -> Unit
+) {
     Column(Modifier.fillMaxSize()) {
-        TopAppBar(title = { Text(stringResource(R.string.notifications)) }, windowInsets = WindowInsets(0, 0, 0, 0),
-            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) } },
-            actions = { IconButton(onClick = onSettings) {
-                Icon(Icons.Default.Settings, stringResource(R.string.local_notifications_settings))
-            } })
-        FilterChip(selected = state.onlyUnread, onClick = { onFilter(!state.onlyUnread) },
-            modifier = Modifier.padding(horizontal = 16.dp), label = { Text(stringResource(R.string.notifications_unread)) })
-        state.actionError?.let { Text(it.localizedMessage(), Modifier.padding(16.dp), color = MaterialTheme.colorScheme.error) }
-        when (val content = state.content) {
-            NotificationsContent.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-            is NotificationsContent.Error -> Column(Modifier.fillMaxSize().padding(24.dp),
-                verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(content.error.localizedMessage())
-                TextButton(onClick = onRetry) { Text(stringResource(R.string.retry)) }
+
+        TopAppBar(
+            title = { Text(stringResource(R.string.notifications)) },
+            windowInsets = WindowInsets(0, 0, 0, 0),
+            navigationIcon = {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        stringResource(R.string.back)
+                    )
+                }
+            },
+            actions = {
+                IconButton(onClick = onSettings) {
+                    Icon(
+                        Icons.Default.Settings,
+                        stringResource(R.string.local_notifications_settings)
+                    )
+                }
             }
+        )
+
+        FilterChip(
+            selected = state.onlyUnread,
+            onClick = { onFilter(!state.onlyUnread) },
+            modifier = Modifier.padding(horizontal = 16.dp),
+            label = {
+                Text(stringResource(R.string.notifications_unread))
+            }
+        )
+
+        state.actionError?.let {
+            Text(
+                text = it.localizedMessage(),
+                modifier = Modifier.padding(16.dp),
+                color = MaterialTheme.colorScheme.error
+            )
+        }
+
+        when (val content = state.content) {
+
+            NotificationsContent.Loading -> {
+                Box(
+                    Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            is NotificationsContent.Error -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(content.error.localizedMessage())
+                    TextButton(onClick = onRetry) {
+                        Text(stringResource(R.string.retry))
+                    }
+                }
+            }
+
             is NotificationsContent.Success -> {
-                if (content.items.isEmpty()) Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-                    Text(stringResource(if (state.onlyUnread) R.string.notifications_none_unread else R.string.notifications_empty))
-                } else LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    items(content.items, key = { it.id }) { notice ->
-                        Surface(color = if (notice.read) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.secondaryContainer) {
-                            Row(Modifier.fillMaxWidth().clickable(enabled = state.openingId == null, role = Role.Button) { onOpen(notice.id) }
-                                .padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                                UserAvatar(imageUrl = notice.profileImageUrl, username = notice.username)
-                                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    val actor = notice.username.ifBlank { stringResource(R.string.notification_unknown_user) }
-                                    Text(stringResource(if (notice.type == NotificationType.Follow) R.string.notification_follow else R.string.notification_like, actor),
-                                        fontWeight = if (notice.read) FontWeight.Normal else FontWeight.SemiBold)
-                                    notice.createdAt?.let {
-                                        Text(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).withZone(ZoneId.systemDefault()).format(it),
-                                            style = MaterialTheme.typography.bodySmall)
+                if (content.items.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            stringResource(
+                                if (state.onlyUnread)
+                                    R.string.notifications_none_unread
+                                else
+                                    R.string.notifications_empty
+                            )
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        items(content.items, key = { it.id }) { notice ->
+
+                            Surface(
+                                color = if (notice.read)
+                                    MaterialTheme.colorScheme.surface
+                                else
+                                    MaterialTheme.colorScheme.secondaryContainer
+                            ) {
+
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable(
+                                            enabled = state.openingId == null,
+                                            role = Role.Button
+                                        ) {
+                                            onOpen(notice.id)
+                                        }
+                                        .padding(
+                                            start = 12.dp,
+                                            top = 10.dp,
+                                            end = 8.dp,
+                                            bottom = 10.dp
+                                        ),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+
+                                    UserAvatar(
+                                        imageUrl = notice.profileImageUrl,
+                                        username = notice.username
+                                    )
+
+                                    Spacer(Modifier.width(12.dp))
+
+                                    Column(
+                                        modifier = Modifier.weight(1f),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+
+                                        val actor = notice.username.ifBlank {
+                                            stringResource(R.string.notification_unknown_user)
+                                        }
+
+                                        val message = stringResource(
+                                            if (notice.type == NotificationType.Follow)
+                                                R.string.notification_follow
+                                            else
+                                                R.string.notification_like,
+                                            actor
+                                        )
+
+                                        val styledMessage = buildAnnotatedString {
+                                            withStyle(
+                                                SpanStyle(fontWeight = FontWeight.Bold)
+                                            ) {
+                                                append(actor)
+                                            }
+                                            append(message.removePrefix(actor))
+                                        }
+
+                                        Text(text = styledMessage)
+
+                                        notice.createdAt?.let {
+                                            Text(
+                                                text = formatNotificationDate(it),
+                                                style = MaterialTheme.typography.bodySmall
+                                            )
+                                        }
+                                    }
+
+                                    if (
+                                        notice.type == NotificationType.Like &&
+                                        notice.postImageUrl.isNotBlank()
+                                    ) {
+                                        Spacer(Modifier.width(8.dp))
+
+                                        PostThumbnail(
+                                            imageUrl = notice.postImageUrl
+                                        )
+                                    }
+
+                                    if (state.openingId == notice.id) {
+                                        Spacer(Modifier.width(8.dp))
+
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(20.dp),
+                                            strokeWidth = 2.dp
+                                        )
                                     }
                                 }
-                                if (state.openingId == notice.id) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                            }
+                        }
+
+                        if (content.items.size == 50) {
+                            item {
+                                Text(
+                                    stringResource(R.string.notifications_limit),
+                                    Modifier.padding(16.dp)
+                                )
                             }
                         }
                     }
-                    if (content.items.size == 50) item { Text(stringResource(R.string.notifications_limit), Modifier.padding(16.dp)) }
                 }
             }
         }
     }
 }
+
+
+private fun formatNotificationDate(instant: Instant): String {
+    val now = Instant.now()
+    val minutes = Duration.between(instant, now).toMinutes()
+
+    if (minutes in 0 until 1440) {
+        return when {
+            minutes < 1 -> "Ahora"
+            minutes < 60 -> "$minutes min"
+            else -> "${minutes / 60} h"
+        }
+    }
+
+    val zone = ZoneId.systemDefault()
+    val date = instant.atZone(zone).toLocalDate()
+    val currentYear = LocalDate.now(zone).year
+
+    return if (date.year == currentYear) {
+        date.format(
+            DateTimeFormatter.ofPattern("MMM d", Locale.ENGLISH)
+        )
+    } else {
+        date.format(
+            DateTimeFormatter.ofPattern("dd/MM/yy")
+        )
+    }
+}
+

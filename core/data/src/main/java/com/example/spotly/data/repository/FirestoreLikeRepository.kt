@@ -78,14 +78,21 @@ class FirestoreLikeRepository(private val services: FirebaseServices,
                 val postDoc = transaction.get(post)
                 if (!postDoc.exists()) return@runTransaction false
                 val recipient = postDoc.getString("authorId") ?: return@runTransaction false
+                val postImageUrl = postDoc.getString("imageUrl").orEmpty()
                 val notice = services.firestore.collection("notifications").document("like_${postId}_${uid}")
                 val exists = transaction.get(like).exists()
                 if (liked && !exists) {
                     transaction.set(like, mapOf("createdAt" to FieldValue.serverTimestamp()))
-                    if (recipient != uid) transaction.set(notice, notificationData(uid, recipient, "like", postId))
+                    if (recipient != uid) {
+                        transaction.set(
+                            notice,
+                            notificationData(uid, recipient, "like", postId, postImageUrl)
+                        )
+                    }
                 } else if (!liked && exists) {
                     transaction.delete(like)
-                    if (recipient != uid) transaction.delete(notice)
+                    if (recipient != uid)
+                        transaction.delete(notice)
                 }
                 true
             }.await()

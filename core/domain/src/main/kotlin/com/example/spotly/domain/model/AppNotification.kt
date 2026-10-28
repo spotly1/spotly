@@ -12,5 +12,6 @@ data class AppNotification(
     val type: NotificationType,
     val postId: String,
     val createdAt: Instant?,
-    val read: Boolean
+    val read: Boolean,
+    val postImageUrl: String = ""
 )

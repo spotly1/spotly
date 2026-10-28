@@ -115,10 +115,12 @@ service cloud.firestore {
     match /notifications/{noticeId} {
       function validNotice() {
         let data = request.resource.data;
-        return data.keys().hasOnly(['recipientId', 'actorId', 'type', 'postId', 'createdAt', 'read'])
+        return data.keys().hasOnly(['recipientId', 'actorId', 'type', 'postId', 'postImageUrl', 'createdAt', 'read'])
           && data.actorId == request.auth.uid && data.recipientId is string
           && data.recipientId != request.auth.uid && data.postId is string
           && data.createdAt == request.time && data.read == false
+          && data.postImageUrl is string
+          && data.postImageUrl.size() <= 2048
           && exists(/databases/$(database)/documents/users/$(data.actorId))
           && exists(/databases/$(database)/documents/users/$(data.recipientId));
       }
@@ -126,6 +128,7 @@ service cloud.firestore {
         let data = request.resource.data;
         let relation = /databases/$(database)/documents/follows/$(data.actorId + '_' + data.recipientId);
         return data.type == 'follow' && data.postId == ''
+          && data.postImageUrl == ''
           && noticeId == 'follow_' + data.actorId + '_' + data.recipientId
           && !exists(relation)
           && getAfter(relation).data.followerId == data.actorId
@@ -136,6 +139,7 @@ service cloud.firestore {
         let data = request.resource.data;
         let like = /databases/$(database)/documents/posts/$(data.postId)/likes/$(data.actorId);
         return data.type == 'like' && data.postId != ''
+          && data.postImageUrl == get(/databases/$(database)/documents/posts/$(data.postId)).data.imageUrl
           && noticeId == 'like_' + data.postId + '_' + data.actorId
           && get(/databases/$(database)/documents/posts/$(data.postId)).data.authorId == data.recipientId
           && !exists(like) && getAfter(like).data.createdAt == request.time;

@@ -7,6 +7,7 @@ data class NotificationDto(
     val actorId: String = "",
     val type: String = "",
     val postId: String = "",
+    val postImageUrl: String = "",
     val createdAt: Timestamp? = null,
     val read: Boolean = false
 )
