@@ -34,6 +34,7 @@ fun ExploreScreen(
     onQueryChange: (String) -> Unit,
     onSearchRetry: () -> Unit,
     onExploreRetry: () -> Unit,
+    onLoadMore: () -> Unit,
     onUserClick: (String) -> Unit,
     onPostClick: (String) -> Unit,
     onRemoveRecent: (String) -> Unit,
@@ -178,10 +179,30 @@ fun ExploreScreen(
                 }
 
                 is ExploreUiState.Success -> {
-                    ExploreGrid(
-                        posts = current.posts,
-                        onPostClick = onPostClick
-                    )
+                    if (current.posts.isEmpty()) {
+                        Column(
+                            modifier = Modifier.fillMaxSize().padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = stringResource(R.string.explore_empty),
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                            TextButton(onClick = onExploreRetry) {
+                                Text(stringResource(R.string.explore_refresh))
+                            }
+                        }
+                    } else {
+                        ExploreGrid(
+                            posts = current.posts,
+                            hasMore = current.hasMore,
+                            loadingMore = current.loadingMore,
+                            pageError = current.pageError?.localizedMessage(),
+                            onLoadMore = onLoadMore,
+                            onPostClick = onPostClick
+                        )
+                    }
                 }
             }
         }
