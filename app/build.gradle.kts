@@ -48,7 +48,7 @@ dependencies {
     implementation(project(":features:notifications"))
     implementation(project(":features:posts"))
     implementation(project(":features:profile"))
-    implementation(project(":features:search"))
+    implementation(project(":features:explore"))
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)

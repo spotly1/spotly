@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Explore
-import com.example.spotly.ui.feed.ExploreRoute
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
@@ -37,7 +36,6 @@ import com.example.spotly.ui.post.LikeListRoute
 import com.example.spotly.ui.notifications.NotificationsRoute
 import com.example.spotly.ui.profile.EditProfileRoute
 import com.example.spotly.ui.profile.ProfileRoute
-import com.example.spotly.ui.search.SearchRoute
 import com.example.spotly.viewmodel.AuthViewModel
 import com.example.spotly.viewmodel.ProfileViewModel
 import com.example.spotly.ui.profile.UserProfileRoute
@@ -54,13 +52,13 @@ import com.example.spotly.notifications.openNotificationSettings
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
+import com.example.spotly.ui.explore.ExploreRoute
 
 private object Route {
     const val Login = "login"
     const val Register = "register"
     const val Feed = "feed"
     const val Explore = "explore"
-    const val Search = "search"
     const val Notifications = "notifications"
     const val CreatePost = "create_post"
     const val PostDetail = "post/{postId}"
@@ -131,9 +129,6 @@ fun SpotlyNavigation(container: com.example.spotly.AppContainer,
                     NavigationItem(currentRoute, Route.Explore, Icons.Default.Explore, R.string.explore) {
                         navController.navigateMain(Route.Explore)
                     }
-                    NavigationItem(currentRoute, Route.Search, Icons.Default.Search, R.string.search) {
-                        navController.navigateMain(Route.Search)
-                    }
                     NavigationItem(currentRoute, Route.Profile, Icons.Default.Person, R.string.profile) {
                         navController.navigateMain(Route.Profile)
                     }
@@ -163,7 +158,7 @@ fun SpotlyNavigation(container: com.example.spotly.AppContainer,
                     viewModel = viewModel(factory = container.feedFactory),
                     onNotificationsClick = { navController.navigate(Route.Notifications) { launchSingleTop = true } },
                     onLikesClick = { navController.navigate(Route.likeList(it)) { launchSingleTop = true } },
-                    onSearchClick = { navController.navigateMain(Route.Search) },
+                    onSearchClick = { navController.navigateMain(Route.Explore) },
                     onPostClick = { navController.navigate(Route.postDetail(it)) { launchSingleTop = true } },
                     onUserClick = { uid ->
                         if (uid == authViewModel.currentUserId()) {
@@ -179,18 +174,37 @@ fun SpotlyNavigation(container: com.example.spotly.AppContainer,
                     }
                 )
             }
+
             composable(Route.Explore) {
                 if (!online) {
-                    OnlineRequired { navController.navigateMain(Route.Feed) }
+                    OnlineRequired {
+                        navController.navigateMain(Route.Feed)
+                    }
                     return@composable
                 }
-                ExploreRoute(viewModel = viewModel(factory = container.exploreFactory),
-                    onUserClick = { navController.navigate(Route.userProfile(it)) { launchSingleTop = true } },
-                    onPostClick = { navController.navigate(Route.postDetail(it)) { launchSingleTop = true } },
-                    onCreatePostClick = { navController.navigate(Route.CreatePost) { launchSingleTop = true } },
-                    onSearchClick = { navController.navigateMain(Route.Search) },
-                    onLikesClick = { navController.navigate(Route.likeList(it)) { launchSingleTop = true } },
-                    onNotificationsClick = { navController.navigate(Route.Notifications) { launchSingleTop = true } })
+
+                ExploreRoute(
+                    exploreViewModel = viewModel(
+                        factory = container.exploreFactory
+                    ),
+                    searchViewModel = viewModel(
+                        factory = container.searchFactory
+                    ),
+                    onUserClick = { uid ->
+                        if (uid == authViewModel.currentUserId()) {
+                            navController.navigateMain(Route.Profile)
+                        } else {
+                            navController.navigate(Route.userProfile(uid)) {
+                                launchSingleTop = true
+                            }
+                        }
+                    },
+                    onPostClick = { postId ->
+                        navController.navigate(Route.postDetail(postId)) {
+                            launchSingleTop = true
+                        }
+                    }
+                )
             }
             composable(Route.Notifications) {
                 if (!online) {
@@ -206,16 +220,6 @@ fun SpotlyNavigation(container: com.example.spotly.AppContainer,
                             launchSingleTop = true
                         }
                     })
-            }
-            composable(Route.Search) {
-                if (!online) {
-                    OnlineRequired { navController.navigateMain(Route.Feed) }
-                    return@composable
-                }
-                SearchRoute(viewModel = viewModel(factory = container.searchFactory), onUserClick = { uid ->
-                    if (uid == authViewModel.currentUserId()) navController.navigateMain(Route.Profile)
-                    else navController.navigate(Route.userProfile(uid)) { launchSingleTop = true }
-                })
             }
             composable(Route.PostDetail) { entry ->
                 val postId = entry.arguments?.getString("postId") ?: return@composable
@@ -345,10 +349,15 @@ private fun RowScope.NavigationItem(
     )
 }
 
+
 private fun androidx.navigation.NavHostController.navigateMain(route: String) {
     if (currentDestination?.route == route) return
 
     if (route == Route.Feed && popBackStack(Route.Feed, inclusive = false)) {
+        return
+    }
+
+    if (route == Route.Explore && popBackStack(Route.Explore, inclusive = false)) {
         return
     }
 
@@ -357,8 +366,11 @@ private fun androidx.navigation.NavHostController.navigateMain(route: String) {
     }
 
     navigate(route) {
-        popUpTo(Route.Feed) { saveState = true }
+        popUpTo(Route.Feed) {
+            saveState = true
+        }
         launchSingleTop = true
-        restoreState = route != Route.Profile
+        restoreState = route != Route.Profile && route != Route.Explore
     }
 }
+

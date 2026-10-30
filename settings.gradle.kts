@@ -25,5 +25,7 @@ dependencyResolutionManagement {
 rootProject.name = "Spotly"
 include(":app")
 include(":core:domain", ":core:data", ":core:network", ":core:database", ":core:ui")
-include(":features:auth", ":features:feed", ":features:posts", ":features:profile", ":features:search")
+include(":features:auth", ":features:feed", ":features:posts", ":features:profile",
+    ":features:explore"
+)
 include(":features:notifications")

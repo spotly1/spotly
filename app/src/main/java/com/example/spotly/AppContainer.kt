@@ -17,6 +17,8 @@ class AppContainer(context: Context) {
     private val database = com.example.spotly.database.SpotlyDatabase.create(context)
     private val auth: AuthRepository = FirebaseAuthRepository(services)
     private val profiles: ProfileRepository = FirebaseProfileRepository(services)
+    private val recentSearches: RecentSearchRepository =
+        DataStoreRecentSearchRepository(context)
     private val posts: PostRepository = FirestorePostRepository(services, connection)
     private val follows: FollowRepository = FirestoreFollowRepository(services, connection)
     private val feed: FeedRepository = OfflineFeedRepository(posts, follows, auth, connection, database.feedDao())
@@ -68,9 +70,19 @@ class AppContainer(context: Context) {
     val notificationsFactory = viewModelFactory { initializer {
         NotificationsViewModel(ObserveNotificationsUseCase(notifications), MarkNotificationReadUseCase(notifications))
     } }
-    val searchFactory = viewModelFactory { initializer {
-        SearchViewModel(SearchUsersUseCase(FirestoreUserSearchRepository(services)), createSavedStateHandle())
-    } }
+    val searchFactory = viewModelFactory {
+        initializer {
+            SearchViewModel(
+                searchUsers = SearchUsersUseCase(
+                    FirestoreUserSearchRepository(services)
+                ),
+                savedState = createSavedStateHandle(),
+                recentSearches = recentSearches,
+                getCurrentUserId = GetCurrentUserIdUseCase(auth),
+                getUserProfile = GetUserProfileUseCase(profiles)
+            )
+        }
+    }
     fun likeListFactory(postId: String) = viewModelFactory {
         initializer { LikeListViewModel(postId, ObservePostLikeUsersUseCase(likes)) }
     }

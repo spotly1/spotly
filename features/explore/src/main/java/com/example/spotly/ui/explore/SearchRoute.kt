@@ -1,4 +1,4 @@
-package com.example.spotly.ui.search
+package com.example.spotly.ui.explore
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
