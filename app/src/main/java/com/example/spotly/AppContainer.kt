@@ -92,7 +92,6 @@ class AppContainer(context: Context) {
             DeletePostUseCase(postDetails, auth), GetCurrentUserIdUseCase(auth), createSavedStateHandle(),
             ObservePostLikesUseCase(likes), SetPostLikeUseCase(likes, auth))
     } }
-    // El caso de publicación conserva el borrador: debe ser una instancia por ViewModel, no global.
     val createPostFactory = viewModelFactory { initializer {
         CreatePostViewModel(PublishPostUseCase(posts, images, auth), GetCurrentLocationUseCase(locations))
     } }
