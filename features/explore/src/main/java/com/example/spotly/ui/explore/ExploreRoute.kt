@@ -25,6 +25,7 @@ fun ExploreRoute(
         onQueryChange = searchViewModel::changeQuery,
         onSearchRetry = searchViewModel::retry,
         onExploreRetry = exploreViewModel::refresh,
+        onLoadMore = exploreViewModel::loadMore,
         onUserClick = { uid ->
             searchViewModel.recordVisitedUser(uid)
             onUserClick(uid)
